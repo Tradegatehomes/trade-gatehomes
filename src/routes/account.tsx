@@ -10,10 +10,10 @@ import { formatDate, formatNaira } from "@/lib/format";
 export const Route = createFileRoute("/account")({
   head: () => ({
     meta: [
-      { title: "My trips — KeyNest" },
-      { name: "description", content: "View your upcoming and past KeyNest bookings." },
-      { property: "og:title", content: "My trips — KeyNest" },
-      { property: "og:description", content: "View your upcoming and past KeyNest bookings." },
+      { title: "My trips — TradeGate Continental Homes" },
+      { name: "description", content: "View your upcoming and past TradeGate Continental Homes bookings." },
+      { property: "og:title", content: "My trips — TradeGate Continental Homes" },
+      { property: "og:description", content: "View your upcoming and past TradeGate Continental Homes bookings." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],

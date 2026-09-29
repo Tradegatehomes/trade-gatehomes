@@ -1,9 +1,10 @@
 import { Link } from "@tanstack/react-router";
-import { KeyRound, Menu } from "lucide-react";
+import { Menu } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
+import logoAsset from "@/assets/tradegate-continental-homes-logo.png.asset.json";
 
 export function SiteHeader() {
   const [open, setOpen] = useState(false);
@@ -15,12 +16,13 @@ export function SiteHeader() {
 
   return (
     <header className="sticky top-0 z-40 border-b border-border/70 bg-background/85 backdrop-blur">
-      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4">
-        <Link to="/" className="flex items-center gap-2">
-          <span className="flex size-9 items-center justify-center rounded-2xl bg-brand text-brand-foreground">
-            <KeyRound className="size-5" />
-          </span>
-          <span className="font-display text-xl font-bold tracking-tight text-ink">KeyNest</span>
+      <div className="mx-auto flex h-20 max-w-6xl items-center justify-between gap-4 px-4">
+        <Link to="/" aria-label="TradeGate Continental Homes home" className="shrink-0">
+          <img
+            src={logoAsset.url}
+            alt="TradeGate Continental Homes"
+            className="h-16 w-auto object-contain"
+          />
         </Link>
 
         <nav className="hidden items-center gap-1 md:flex">
@@ -49,7 +51,13 @@ export function SiteHeader() {
             </Button>
           </SheetTrigger>
           <SheetContent side="right" className="w-72">
-            <SheetTitle className="font-display">KeyNest</SheetTitle>
+            <SheetTitle>
+              <img
+                src={logoAsset.url}
+                alt="TradeGate Continental Homes"
+                className="h-24 w-auto object-contain"
+              />
+            </SheetTitle>
             <nav className="mt-6 flex flex-col gap-1">
               {links.map((l) => (
                 <Link

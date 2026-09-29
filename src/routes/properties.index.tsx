@@ -31,13 +31,13 @@ export const Route = createFileRoute("/properties/")({
   validateSearch: searchSchema,
   head: () => ({
     meta: [
-      { title: "Browse shortlet apartments — KeyNest" },
+      { title: "Browse shortlet apartments — TradeGate Continental Homes" },
       {
         name: "description",
         content:
           "Browse verified shortlet apartments across Nigeria. Filter by city, guests, dates and price, and see live availability.",
       },
-      { property: "og:title", content: "Browse shortlet apartments — KeyNest" },
+      { property: "og:title", content: "Browse shortlet apartments — TradeGate Continental Homes" },
       {
         property: "og:description",
         content:

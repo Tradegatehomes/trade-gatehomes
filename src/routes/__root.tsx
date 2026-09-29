@@ -80,13 +80,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "KeyNest — Book shortlet apartments across Nigeria" },
+      { title: "TradeGate Continental Homes — Shortlet apartments in Nigeria" },
       {
         name: "description",
         content:
           "Browse verified shortlet apartments in Lagos, Abuja and Port Harcourt. Live availability, clear Naira pricing, instant booking.",
       },
-      { property: "og:title", content: "KeyNest — Book shortlet apartments across Nigeria" },
+      { property: "og:title", content: "TradeGate Continental Homes — Shortlet apartments in Nigeria" },
       {
         property: "og:description",
         content:
@@ -97,7 +97,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     ],
     links: [
       { rel: "stylesheet", href: appCss },
-      { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
+      { rel: "icon", href: "/favicon.png", type: "image/png" },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {

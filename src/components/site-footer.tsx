@@ -1,17 +1,17 @@
 import { Link } from "@tanstack/react-router";
-import { KeyRound, Mail, Phone } from "lucide-react";
+import { Mail, Phone } from "lucide-react";
+import logoAsset from "@/assets/tradegate-continental-homes-logo.png.asset.json";
 
 export function SiteFooter() {
   return (
     <footer className="mt-20 border-t border-border/70 bg-card">
       <div className="mx-auto grid max-w-6xl gap-10 px-4 py-12 sm:grid-cols-2 lg:grid-cols-4">
         <div>
-          <div className="flex items-center gap-2">
-            <span className="flex size-9 items-center justify-center rounded-2xl bg-brand text-brand-foreground">
-              <KeyRound className="size-5" />
-            </span>
-            <span className="font-display text-xl font-bold text-ink">KeyNest</span>
-          </div>
+          <img
+            src={logoAsset.url}
+            alt="TradeGate Continental Homes"
+            className="h-32 w-auto object-contain object-left"
+          />
           <p className="mt-3 max-w-xs text-sm text-muted-foreground">
             [BRAND TAGLINE] Book verified shortlet apartments across Nigeria with clear pricing and
             real availability. Replace this placeholder text.
@@ -56,8 +56,7 @@ export function SiteFooter() {
         </div>
       </div>
       <div className="border-t border-border/70 py-4 text-center text-xs text-muted-foreground">
-        © {new Date().getFullYear()} KeyNest — placeholder name. All listings are demo data until
-        you add your own.
+        © {new Date().getFullYear()} TradeGate Continental Homes. All rights reserved.
       </div>
     </footer>
   );

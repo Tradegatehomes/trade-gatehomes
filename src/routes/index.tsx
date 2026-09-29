@@ -15,13 +15,13 @@ const featuredQuery = queryOptions({
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "KeyNest — Book shortlet apartments across Nigeria" },
+      { title: "TradeGate Continental Homes — Shortlet apartments in Nigeria" },
       {
         name: "description",
         content:
           "Verified shortlet apartments in Lagos, Abuja and Port Harcourt. Live availability calendars, clear Naira pricing, instant booking.",
       },
-      { property: "og:title", content: "KeyNest — Book shortlet apartments across Nigeria" },
+      { property: "og:title", content: "TradeGate Continental Homes — Shortlet apartments in Nigeria" },
       {
         property: "og:description",
         content:
