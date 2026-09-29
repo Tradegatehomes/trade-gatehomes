@@ -59,9 +59,9 @@ export function PricingRules() {
   const refresh = () => qc.invalidateQueries({ queryKey: ["admin-pricing", propertyId] });
   const needsDates = type !== "weekend";
   async function add() {
-    if (!propertyId) return toast.error("Pick a property first.");
-    if (needsDates && (!start || !end || end < start)) return toast.error("Enter a valid date range.");
-    if (!price && !modifier) return toast.error("Set a nightly price or a % change.");
+    if (!propertyId) { toast.error("Pick a property first."); return; }
+    if (needsDates && (!start || !end || end < start)) { toast.error("Enter a valid date range."); return; }
+    if (!price && !modifier) { toast.error("Set a nightly price or a % change."); return; }
     const { error } = await supabase.from("pricing_rules").insert({
       property_id: propertyId, rule_type: type, label: label.trim() || null,
       start_date: needsDates ? start : null, end_date: needsDates ? end : null,
@@ -69,14 +69,14 @@ export function PricingRules() {
       price_modifier_percent: modifier ? Number(modifier) : null,
       min_nights: minNights ? Number(minNights) : null,
     });
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     toast.success("Pricing rule added");
     setLabel(""); setPrice(""); setModifier(""); setMinNights("");
     refresh();
   }
   async function remove(id: string) {
     const { error } = await supabase.from("pricing_rules").delete().eq("id", id);
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     refresh();
   }
   return (
@@ -146,13 +146,13 @@ export function PropertyAmenities() {
     const { error } = on
       ? await supabase.from("property_amenities").insert({ property_id: propertyId, amenity_id: amenityId })
       : await supabase.from("property_amenities").delete().eq("property_id", propertyId).eq("amenity_id", amenityId);
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     qc.invalidateQueries({ queryKey: ["admin-property-amenities", propertyId] });
   }
   async function addAmenity() {
-    if (!newName.trim()) return;
+    if (!newName.trim()) { return; }
     const { error } = await supabase.from("amenities").insert({ name: newName.trim() });
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     setNewName("");
     qc.invalidateQueries({ queryKey: ["admin-amenities"] });
   }
@@ -244,8 +244,8 @@ export function Discounts() {
   const refresh = () => qc.invalidateQueries({ queryKey: ["admin-discounts"] });
   async function add() {
     const v = Number(value);
-    if (!code.trim() || !(v > 0) || (kind === "percent" && v > 100)) return toast.error("Enter a code and a valid discount.");
-    if (start && end && end < start) return toast.error("End date must be after start date.");
+    if (!code.trim() || !(v > 0) || (kind === "percent" && v > 100)) { toast.error("Enter a code and a valid discount."); return; }
+    if (start && end && end < start) { toast.error("End date must be after start date."); return; }
     const { error } = await supabase.from("discount_codes").insert({
       code: code.trim().toUpperCase(),
       percent_off: kind === "percent" ? v : null,
@@ -255,19 +255,19 @@ export function Discounts() {
       min_nights: minNights ? Number(minNights) : null,
       property_id: propertyId === "all" ? null : propertyId,
     });
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     toast.success("Discount code added");
     setCode(""); setValue(""); setLimit(""); setMinNights("");
     refresh();
   }
   async function toggle(id: string, active: boolean) {
     const { error } = await supabase.from("discount_codes").update({ active }).eq("id", id);
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     refresh();
   }
   async function remove(id: string) {
     const { error } = await supabase.from("discount_codes").delete().eq("id", id);
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     refresh();
   }
   return (
@@ -326,7 +326,7 @@ export function Reviews() {
   const refresh = () => qc.invalidateQueries({ queryKey: ["admin-reviews"] });
   async function patch(id: string, values: { approved?: boolean; admin_response?: string | null }) {
     const { error } = await supabase.from("reviews").update(values).eq("id", id);
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     if (values.admin_response !== undefined) toast.success("Reply saved");
     refresh();
   }
