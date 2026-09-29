@@ -23,13 +23,13 @@ export const Route = createFileRoute("/booking/$reference")({
   head: ({ loaderData }) => {
     const b = loaderData as Awaited<ReturnType<typeof getBookingByReference>> | undefined;
     if (!b) {
-      return { meta: [{ title: "Booking not found — KeyNest" }, { name: "robots", content: "noindex" }] };
+      return { meta: [{ title: "Booking not found — TradeGate Continental Homes" }, { name: "robots", content: "noindex" }] };
     }
     return {
       meta: [
-        { title: `Booking ${b.reference} — KeyNest` },
+        { title: `Booking ${b.reference} — TradeGate Continental Homes` },
         { name: "robots", content: "noindex" },
-        { property: "og:title", content: `Booking ${b.reference} — KeyNest` },
+        { property: "og:title", content: `Booking ${b.reference} — TradeGate Continental Homes` },
         {
           property: "og:description",
           content: `Your stay at ${b.property.name}: ${formatDate(b.checkIn)} to ${formatDate(b.checkOut)}.`,

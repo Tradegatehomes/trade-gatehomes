@@ -22,9 +22,9 @@ const PROPERTY_STATUSES: PropertyStatus[] = ["active", "inactive", "draft", "mai
 export const Route = createFileRoute("/admin")({
   head: () => ({
     meta: [
-      { title: "Admin dashboard — KeyNest" },
+      { title: "Admin dashboard — TradeGate Continental Homes" },
       { name: "description", content: "Manage properties, bookings, availability, reviews and discount codes." },
-      { property: "og:title", content: "Admin dashboard — KeyNest" },
+      { property: "og:title", content: "Admin dashboard — TradeGate Continental Homes" },
       { property: "og:description", content: "Manage properties, bookings, availability, reviews and discount codes." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },

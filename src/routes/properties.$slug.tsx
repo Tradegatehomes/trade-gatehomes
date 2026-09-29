@@ -29,7 +29,7 @@ export const Route = createFileRoute("/properties/$slug")({
     if (!p) {
       return {
         meta: [
-          { title: "Listing unavailable — KeyNest" },
+          { title: "Listing unavailable — TradeGate Continental Homes" },
           { name: "robots", content: "noindex" },
         ],
       };
@@ -37,7 +37,7 @@ export const Route = createFileRoute("/properties/$slug")({
     return {
       meta: [
         {
-          title: `${p.name} — ${p.city} shortlet | KeyNest`,
+          title: `${p.name} — ${p.city} shortlet | TradeGate Continental Homes`,
         },
         {
           name: "description",
@@ -45,7 +45,7 @@ export const Route = createFileRoute("/properties/$slug")({
             p.description?.replace("[PROPERTY DESCRIPTION] ", "").slice(0, 155) ??
             `Book ${p.name} in ${p.city}, Nigeria. Live availability and clear Naira pricing.`,
         },
-        { property: "og:title", content: `${p.name} — ${p.city} shortlet | KeyNest` },
+        { property: "og:title", content: `${p.name} — ${p.city} shortlet | TradeGate Continental Homes` },
         {
           property: "og:description",
           content:

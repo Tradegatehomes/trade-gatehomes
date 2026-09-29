@@ -13,10 +13,10 @@ export const Route = createFileRoute("/auth")({
   validateSearch: z.object({ redirect: z.string().optional() }),
   head: () => ({
     meta: [
-      { title: "Sign in — KeyNest" },
-      { name: "description", content: "Sign in or create a KeyNest account to manage your stays." },
-      { property: "og:title", content: "Sign in — KeyNest" },
-      { property: "og:description", content: "Sign in or create a KeyNest account to manage your stays." },
+      { title: "Sign in — TradeGate Continental Homes" },
+      { name: "description", content: "Sign in or create a TradeGate Continental Homes account to manage your stays." },
+      { property: "og:title", content: "Sign in — TradeGate Continental Homes" },
+      { property: "og:description", content: "Sign in or create a TradeGate Continental Homes account to manage your stays." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
