@@ -9,7 +9,7 @@
 - [x] Server-side pricing engine + availability engine
 - [x] Booking engine + confirmation page
 - [x] Auth (email/password + Google) and guest dashboard
-- [ ] Admin dashboard: overview, properties CRUD, bookings, calendar, reviews, discounts
+- [x] Admin dashboard: overview, properties, bookings, pricing rules, amenities, blocked dates, payments, reviews (with host replies), discounts
 
 ## Phase 2 — payments
 - [ ] Paystack integration (modular provider layer)

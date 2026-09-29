@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { formatDate, formatNaira } from "@/lib/format";
+import { Discounts, Payments, PricingRules, PropertyAmenities, Reviews } from "@/components/admin/extra-tabs";
 import type { Database } from "@/integrations/supabase/types";
 
 type BookingStatus = Database["public"]["Enums"]["booking_status"];
@@ -52,14 +53,20 @@ function AdminPage() {
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="bookings">Bookings</TabsTrigger>
           <TabsTrigger value="properties">Properties</TabsTrigger>
+          <TabsTrigger value="pricing">Pricing</TabsTrigger>
+          <TabsTrigger value="amenities">Amenities</TabsTrigger>
           <TabsTrigger value="calendar">Blocked dates</TabsTrigger>
+          <TabsTrigger value="payments">Payments</TabsTrigger>
           <TabsTrigger value="reviews">Reviews</TabsTrigger>
           <TabsTrigger value="discounts">Discounts</TabsTrigger>
         </TabsList>
         <TabsContent value="overview"><Overview /></TabsContent>
         <TabsContent value="bookings"><Bookings /></TabsContent>
         <TabsContent value="properties"><Properties /></TabsContent>
+        <TabsContent value="pricing"><PricingRules /></TabsContent>
+        <TabsContent value="amenities"><PropertyAmenities /></TabsContent>
         <TabsContent value="calendar"><Blocked /></TabsContent>
+        <TabsContent value="payments"><Payments /></TabsContent>
         <TabsContent value="reviews"><Reviews /></TabsContent>
         <TabsContent value="discounts"><Discounts /></TabsContent>
       </Tabs>
@@ -437,87 +444,6 @@ function Blocked() {
         <div key={b.id} className={`${card} flex items-center justify-between`}>
           <p className="text-sm"><span className="font-semibold text-ink">{b.properties?.name}</span> · {formatDate(b.start_date)} → {formatDate(b.end_date)}{b.note ? ` · ${b.note}` : ""}</p>
           <Button size="sm" variant="ghost" onClick={() => remove(b.id)}>Remove</Button>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function Reviews() {
-  const qc = useQueryClient();
-  const q = useQuery({
-    queryKey: ["admin-reviews"],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("reviews").select("id,guest_name,rating,comment,approved,properties(name)").order("created_at", { ascending: false });
-      if (error) throw error;
-      return data;
-    },
-  });
-  async function setApproved(id: string, approved: boolean) {
-    const { error } = await supabase.from("reviews").update({ approved }).eq("id", id);
-    if (error) { toast.error(error.message); return; }
-    qc.invalidateQueries({ queryKey: ["admin-reviews"] });
-  }
-  return (
-    <div className="mt-6 space-y-3">
-      {(q.data ?? []).map((r) => (
-        <div key={r.id} className={`${card} flex flex-wrap items-center justify-between gap-3`}>
-          <div className="max-w-2xl">
-            <p className="font-semibold text-ink">{r.guest_name} · {r.rating}/5 · {r.properties?.name}</p>
-            <p className="text-sm text-muted-foreground">{r.comment}</p>
-          </div>
-          <div className="flex items-center gap-2">
-            <Badge variant={r.approved ? "default" : "secondary"}>{r.approved ? "Published" : "Hidden"}</Badge>
-            <Button size="sm" variant="outline" onClick={() => setApproved(r.id, !r.approved)}>{r.approved ? "Hide" : "Publish"}</Button>
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function Discounts() {
-  const qc = useQueryClient();
-  const [code, setCode] = useState("");
-  const [percent, setPercent] = useState("");
-  const q = useQuery({
-    queryKey: ["admin-discounts"],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("discount_codes").select("id,code,percent_off,amount_off,times_used,usage_limit,active").order("created_at", { ascending: false });
-      if (error) throw error;
-      return data;
-    },
-  });
-  const refresh = () => qc.invalidateQueries({ queryKey: ["admin-discounts"] });
-  async function add() {
-    const pct = Number(percent);
-    if (!code.trim() || !(pct > 0 && pct <= 100)) { toast.error("Enter a code and a percentage between 1 and 100."); return; }
-    const { error } = await supabase.from("discount_codes").insert({ code: code.trim().toUpperCase(), percent_off: pct });
-    if (error) { toast.error(error.message); return; }
-    setCode("");
-    setPercent("");
-    refresh();
-  }
-  async function toggle(id: string, active: boolean) {
-    const { error } = await supabase.from("discount_codes").update({ active }).eq("id", id);
-    if (error) { toast.error(error.message); return; }
-    refresh();
-  }
-  return (
-    <div className="mt-6 space-y-3">
-      <div className={`${card} flex flex-wrap items-end gap-2`}>
-        <Input className="w-44" placeholder="CODE" value={code} onChange={(e) => setCode(e.target.value)} />
-        <Input className="w-32" type="number" placeholder="% off" value={percent} onChange={(e) => setPercent(e.target.value)} />
-        <Button onClick={add}>Add code</Button>
-      </div>
-      {(q.data ?? []).map((d) => (
-        <div key={d.id} className={`${card} flex items-center justify-between`}>
-          <p className="text-sm">
-            <span className="font-display font-bold text-ink">{d.code}</span> ·{" "}
-            {d.percent_off ? `${d.percent_off}% off` : d.amount_off ? `${formatNaira(Number(d.amount_off))} off` : ""} · used {d.times_used}
-            {d.usage_limit ? `/${d.usage_limit}` : ""}
-          </p>
-          <Button size="sm" variant={d.active ? "default" : "outline"} onClick={() => toggle(d.id, !d.active)}>{d.active ? "Active" : "Inactive"}</Button>
         </div>
       ))}
     </div>
