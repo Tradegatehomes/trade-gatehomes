@@ -204,23 +204,27 @@ function Bookings() {
   });
   const rows = (q.data ?? []).filter((b) => filter === "all" || b.status === filter);
   return (
-    <div className="mt-6 space-y-3">
-      <Select value={filter} onValueChange={setFilter}>
+    <div className="mt-6">
+      <SectionIntro eyebrow="Guest operations" title="Bookings" description="Review upcoming stays, guest details and booking status changes." />
+      <div className={card + " mb-4 flex flex-wrap items-center justify-between gap-3"}>
+        <div><p className="text-sm font-semibold text-ink">Booking queue</p><p className="text-xs text-muted-foreground">{rows.length} matching bookings</p></div>
+        <Select value={filter} onValueChange={setFilter}>
         <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
         <SelectContent>
           <SelectItem value="all">All statuses</SelectItem>
           {BOOKING_STATUSES.map((s) => <SelectItem key={s} value={s} className="capitalize">{s.replace("_", " ")}</SelectItem>)}
         </SelectContent>
-      </Select>
+        </Select>
+      </div>
+      <div className="space-y-3">
       {q.isLoading && <p className="text-muted-foreground">Loading…</p>}
       {!q.isLoading && rows.length === 0 && <p className="text-muted-foreground">No bookings.</p>}
       {rows.map((b) => (
-        <div key={b.id} className={`${card} flex flex-wrap items-center justify-between gap-3`}>
-          <div>
-            <p className="font-semibold text-ink">{b.guest_name} · {b.properties?.name}</p>
-            <p className="text-sm text-muted-foreground">
-              {formatDate(b.check_in)} → {formatDate(b.check_out)} · {b.guests} guests · {formatNaira(Number(b.total_amount))}
-            </p>
+        <div key={b.id} className={`${card} flex flex-wrap items-center justify-between gap-4`}>
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-2"><p className="font-semibold text-ink">{b.guest_name}</p><Badge variant="secondary" className="capitalize">{b.status.replace("_", " ")}</Badge></div>
+            <p className="mt-1 text-sm font-medium text-ink/80">{b.properties?.name}</p>
+            <p className="mt-1 text-sm text-muted-foreground">{formatDate(b.check_in)} → {formatDate(b.check_out)} · {b.guests} guests · {formatNaira(Number(b.total_amount))}</p>
             <p className="text-xs text-muted-foreground">{b.reference} · {b.guest_email}{b.guest_phone ? ` · ${b.guest_phone}` : ""}</p>
           </div>
           <Select value={b.status} onValueChange={(v) => update.mutate({ id: b.id, status: v as BookingStatus })}>
@@ -231,6 +235,7 @@ function Bookings() {
           </Select>
         </div>
       ))}
+      </div>
     </div>
   );
 }
@@ -583,8 +588,9 @@ function Blocked() {
     refresh();
   }
   return (
-    <div className="mt-6 space-y-4">
-      <div className={`${card} flex flex-wrap items-end gap-2`}>
+    <div className="mt-6">
+      <SectionIntro eyebrow="Availability" title="Blocked dates" description="Keep unavailable dates out of the booking flow for maintenance, owner use or manual holds." />
+      <div className={`${card} mb-4 flex flex-wrap items-end gap-2`}>
         <Select value={propertyId} onValueChange={setPropertyId}>
           <SelectTrigger className="w-56"><SelectValue placeholder="Property" /></SelectTrigger>
           <SelectContent>{(props.data ?? []).map((p) => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}</SelectContent>
@@ -594,12 +600,12 @@ function Blocked() {
         <Input className="w-48" placeholder="Note (optional)" value={note} onChange={(e) => setNote(e.target.value)} />
         <Button onClick={add}>Block dates</Button>
       </div>
-      {(q.data ?? []).map((b) => (
+      <div className="space-y-3">{(q.data ?? []).map((b) => (
         <div key={b.id} className={`${card} flex items-center justify-between`}>
           <p className="text-sm"><span className="font-semibold text-ink">{b.properties?.name}</span> · {formatDate(b.start_date)} → {formatDate(b.end_date)}{b.note ? ` · ${b.note}` : ""}</p>
           <Button size="sm" variant="ghost" onClick={() => remove(b.id)}>Remove</Button>
         </div>
-      ))}
+      ))}</div>
     </div>
   );
 }
