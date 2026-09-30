@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useSuspenseQuery, queryOptions } from "@tanstack/react-query";
 import { z } from "zod";
-import { Search } from "lucide-react";
+import { ArrowLeft, Search } from "lucide-react";
 import { useEffect, useState } from "react";
 import { SearchBar } from "@/components/search-bar";
 import { PropertyCard } from "@/components/property-card";
@@ -103,6 +103,12 @@ function PropertiesPage() {
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-6 sm:py-10">
+      <Link
+        to="/"
+        className="mb-5 inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-2 text-sm font-semibold text-ink shadow-sm transition hover:bg-secondary"
+      >
+        <ArrowLeft className="size-4" /> Back to home
+      </Link>
       <h1 className="font-display text-2xl font-bold tracking-tight text-ink sm:text-4xl">
         Browse stays
       </h1>
