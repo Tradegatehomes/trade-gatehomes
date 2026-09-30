@@ -49,16 +49,16 @@ function AdminPage() {
   return (
     <Shell>
       <Tabs defaultValue="overview">
-        <TabsList className="flex-wrap">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="bookings">Bookings</TabsTrigger>
-          <TabsTrigger value="properties">Properties</TabsTrigger>
-          <TabsTrigger value="pricing">Pricing</TabsTrigger>
-          <TabsTrigger value="amenities">Amenities</TabsTrigger>
-          <TabsTrigger value="calendar">Blocked dates</TabsTrigger>
-          <TabsTrigger value="payments">Payments</TabsTrigger>
-          <TabsTrigger value="reviews">Reviews</TabsTrigger>
-          <TabsTrigger value="discounts">Discounts</TabsTrigger>
+        <TabsList className="h-auto w-full justify-start gap-1 overflow-x-auto rounded-2xl border border-border bg-card p-2 shadow-sm">
+          <TabsTrigger value="overview" className="rounded-xl">Overview</TabsTrigger>
+          <TabsTrigger value="bookings" className="rounded-xl">Bookings</TabsTrigger>
+          <TabsTrigger value="properties" className="rounded-xl">Properties</TabsTrigger>
+          <TabsTrigger value="pricing" className="rounded-xl">Pricing</TabsTrigger>
+          <TabsTrigger value="amenities" className="rounded-xl">Amenities</TabsTrigger>
+          <TabsTrigger value="calendar" className="rounded-xl">Blocked dates</TabsTrigger>
+          <TabsTrigger value="payments" className="rounded-xl">Payments</TabsTrigger>
+          <TabsTrigger value="reviews" className="rounded-xl">Reviews</TabsTrigger>
+          <TabsTrigger value="discounts" className="rounded-xl">Discounts</TabsTrigger>
         </TabsList>
         <TabsContent value="overview"><Overview /></TabsContent>
         <TabsContent value="bookings"><Bookings /></TabsContent>
@@ -94,7 +94,7 @@ function Shell({ children }: { children: React.ReactNode }) {
   );
 }
 
-const card = "rounded-2xl border border-border bg-card p-5";
+const card = "rounded-3xl border border-border/80 bg-card p-5 shadow-sm";
 
 function useProps() {
   return useQuery({
