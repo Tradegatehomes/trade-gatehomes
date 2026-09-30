@@ -207,7 +207,7 @@ export function Payments() {
         <p className="mt-1 font-display text-3xl font-bold text-ink">{formatNaira(received)}</p>
       </div>
       {q.isLoading && <p className="text-muted-foreground">Loading…</p>}
-      {!q.isLoading && rows.length === 0 && <p className="text-muted-foreground">No payments yet.</p>}
+      {!q.isLoading && rows.length === 0 && <div className={card + " py-10 text-center"}><p className="font-semibold text-ink">Payment integration pending</p><p className="mt-1 text-sm text-muted-foreground">Reservations are currently confirmed manually. Paystack will populate this area once payment processing is connected.</p></div>}
       {rows.map((p) => (
         <div key={p.id} className={`${card} flex flex-wrap items-center justify-between gap-3`}>
           <div>
