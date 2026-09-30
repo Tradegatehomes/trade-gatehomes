@@ -28,7 +28,7 @@ export const bookingSchema = quoteSchema.extend({
 
 export const num = (v: unknown) => Number(v ?? 0);
 
-export function pub() {
+export function pub(accessToken?: string | null) {
   const key = process.env["SUPABASE_PUBLISHABLE_KEY"] || import.meta.env["VITE_SUPABASE_PUBLISHABLE_KEY"];
   const url = process.env["SUPABASE_URL"] || import.meta.env["VITE_SUPABASE_URL"];
   if (!url || !key) throw new Error("Missing Supabase environment variables.");
@@ -38,7 +38,9 @@ export function pub() {
     global: {
       fetch: (input, init) => {
         const headers = new Headers(init?.headers);
-        if (key.startsWith("sb_") && headers.get("Authorization") === `Bearer ${key}`) {
+        if (accessToken) {
+          headers.set("Authorization", `Bearer ${accessToken}`);
+        } else if (key.startsWith("sb_") && headers.get("Authorization") === `Bearer ${key}`) {
           headers.delete("Authorization");
         }
         headers.set("apikey", key);
