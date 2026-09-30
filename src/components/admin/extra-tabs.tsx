@@ -11,7 +11,7 @@ import type { Database } from "@/integrations/supabase/types";
 
 type RuleType = Database["public"]["Enums"]["pricing_rule_type"];
 const RULE_TYPES: RuleType[] = ["weekend", "seasonal", "date_specific", "promotional"];
-const card = "rounded-2xl border border-border bg-card p-5";
+const card = "rounded-3xl border border-border/80 bg-card p-5 shadow-sm";
 
 function usePropertyList() {
   return useQuery({
@@ -81,7 +81,8 @@ export function PricingRules() {
   }
   return (
     <div className="mt-6 space-y-4">
-      <PropertyPicker value={propertyId} onChange={setPropertyId} />
+      <div><p className="text-xs font-bold uppercase tracking-[0.16em] text-brand">Revenue controls</p><h2 className="mt-1 font-display text-2xl font-bold text-ink">Pricing</h2><p className="mt-1 text-sm text-muted-foreground">Create seasonal, weekend and promotional pricing rules without changing the base nightly rate.</p></div>
+      <div className={card}><PropertyPicker value={propertyId} onChange={setPropertyId} /></div>
       {propertyId && (
         <>
           <div className={`${card} flex flex-wrap items-end gap-2`}>
@@ -158,7 +159,8 @@ export function PropertyAmenities() {
   }
   return (
     <div className="mt-6 space-y-4">
-      <div className="flex flex-wrap gap-2">
+      <div><p className="text-xs font-bold uppercase tracking-[0.16em] text-brand">Listing details</p><h2 className="mt-1 font-display text-2xl font-bold text-ink">Amenities</h2><p className="mt-1 text-sm text-muted-foreground">Control the amenities guests see on each property listing.</p></div>
+      <div className={card + " flex flex-wrap gap-2"}>
         <PropertyPicker value={propertyId} onChange={setPropertyId} />
         <Input className="w-48" placeholder="New amenity name" value={newName} onChange={(e) => setNewName(e.target.value)} />
         <Button variant="outline" onClick={addAmenity}>Add amenity</Button>
@@ -199,8 +201,9 @@ export function Payments() {
   const received = rows.filter((p) => p.status === "success").reduce((s, p) => s + Number(p.amount), 0);
   return (
     <div className="mt-6 space-y-3">
+      <div><p className="text-xs font-bold uppercase tracking-[0.16em] text-brand">Finance</p><h2 className="mt-1 font-display text-2xl font-bold text-ink">Payments</h2><p className="mt-1 text-sm text-muted-foreground">Track successful and pending payments against guest bookings.</p></div>
       <div className={card}>
-        <p className="text-sm text-muted-foreground">Payments received</p>
+        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Payments received</p>
         <p className="mt-1 font-display text-3xl font-bold text-ink">{formatNaira(received)}</p>
       </div>
       {q.isLoading && <p className="text-muted-foreground">Loading…</p>}
@@ -272,6 +275,7 @@ export function Discounts() {
   }
   return (
     <div className="mt-6 space-y-3">
+      <div><p className="text-xs font-bold uppercase tracking-[0.16em] text-brand">Promotions</p><h2 className="mt-1 font-display text-2xl font-bold text-ink">Discounts</h2><p className="mt-1 text-sm text-muted-foreground">Create targeted promo codes with dates, usage limits and minimum-stay rules.</p></div>
       <div className={`${card} flex flex-wrap items-end gap-2`}>
         <Input className="w-36" placeholder="CODE" value={code} onChange={(e) => setCode(e.target.value)} />
         <Select value={kind} onValueChange={(v) => setKind(v as "percent" | "amount")}>
@@ -333,7 +337,8 @@ export function Reviews() {
   const rows = q.data ?? [];
   return (
     <div className="mt-6 space-y-3">
-      {!q.isLoading && rows.length === 0 && <p className="text-muted-foreground">No reviews yet.</p>}
+      <div><p className="text-xs font-bold uppercase tracking-[0.16em] text-brand">Reputation</p><h2 className="mt-1 font-display text-2xl font-bold text-ink">Reviews</h2><p className="mt-1 text-sm text-muted-foreground">Moderate guest reviews and publish host responses.</p></div>
+      {!q.isLoading && rows.length === 0 && <div className={card + " py-10 text-center text-sm text-muted-foreground"}>No reviews yet.</div>}
       {rows.map((r) => (
         <div key={r.id} className={`${card} space-y-3`}>
           <div className="flex flex-wrap items-start justify-between gap-3">
