@@ -19,6 +19,11 @@ type BookingStatus = Database["public"]["Enums"]["booking_status"];
 type PropertyStatus = Database["public"]["Enums"]["property_status"];
 const BOOKING_STATUSES: BookingStatus[] = ["pending", "confirmed", "partially_paid", "fully_paid", "completed", "cancelled", "refunded"];
 const PROPERTY_STATUSES: PropertyStatus[] = ["active", "inactive", "draft", "maintenance"];
+const DEFAULT_PROPERTY_CONTACT = {
+  phone: "+2347058860184",
+  whatsapp: "+2347058860184",
+  email: "tradegateconcept@gmail.com",
+};
 
 export const Route = createFileRoute("/admin")({
   head: () => ({
@@ -133,16 +138,23 @@ type AdminProperty = Database["public"]["Tables"]["properties"]["Row"] & {
 
 function propertyReadiness(p: AdminProperty) {
   const checks = [
-    Boolean(p.name && p.slug && p.city && p.address),
-    Boolean(p.description && p.description.trim().length >= 40),
-    Number(p.base_price) > 0,
-    (p.property_images?.length ?? 0) >= 4,
-    (p.property_amenities?.length ?? 0) >= 3,
-    Boolean(p.house_rules),
-    Boolean(p.cancellation_policy),
+    { label: "Basic information", complete: Boolean(p.name && p.slug && p.city && p.address) },
+    { label: "Description", complete: Boolean(p.description && p.description.trim().length >= 40) },
+    { label: "Pricing", complete: Number(p.base_price) > 0 },
+    { label: "Gallery photos", complete: (p.property_images?.length ?? 0) >= 4 },
+    { label: "Amenities", complete: (p.property_amenities?.length ?? 0) >= 3 },
+    { label: "House rules", complete: Boolean(p.house_rules) },
+    { label: "Cancellation policy", complete: Boolean(p.cancellation_policy) },
+    { label: "Guest enquiries", complete: Boolean(p.whatsapp || p.phone || p.email) },
   ];
-  const completed = checks.filter(Boolean).length;
-  return { completed, total: checks.length, percent: Math.round((completed / checks.length) * 100) };
+  const completed = checks.filter((check) => check.complete).length;
+  return {
+    checks,
+    completed,
+    total: checks.length,
+    percent: Math.round((completed / checks.length) * 100),
+    missing: checks.filter((check) => !check.complete).map((check) => check.label),
+  };
 }
 
 function useProps() {
@@ -337,7 +349,7 @@ function Properties() {
   const [search, setSearch] = useState("");
   const save = useMutation({
     mutationFn: async ({ id, values }: { id: string | null; values: PropertyFormValues }) => {
-      const { name, slug, city, state, address, property_type, description, bedrooms, bathrooms, max_guests, base_price, cleaning_fee, min_nights, house_rules, cancellation_policy } = values;
+      const { name, slug, city, state, address, property_type, description, bedrooms, bathrooms, max_guests, base_price, cleaning_fee, min_nights, house_rules, cancellation_policy, phone, whatsapp, email } = values;
       const fields = {
         name: name.trim(), slug: slug.trim(), city: city.trim(), state: state.trim() || null,
         address: address.trim() || null, property_type: property_type.trim() || "Apartment",
@@ -345,6 +357,9 @@ function Properties() {
         max_guests: Number(max_guests), base_price: Number(base_price), cleaning_fee: Number(cleaning_fee),
         min_nights: Number(min_nights), house_rules: house_rules.trim() || null,
         cancellation_policy: cancellation_policy.trim() || null,
+        phone: phone.trim() || null,
+        whatsapp: whatsapp.trim() || null,
+        email: email.trim().toLowerCase() || null,
       };
       if (id) {
         const { error } = await supabase.from("properties").update(fields).eq("id", id);
@@ -424,6 +439,7 @@ type PropertyFormValues = {
   name: string; slug: string; city: string; state: string; address: string; property_type: string;
   description: string; bedrooms: string; bathrooms: string; max_guests: string; base_price: string;
   cleaning_fee: string; min_nights: string; house_rules: string; cancellation_policy: string;
+  phone: string; whatsapp: string; email: string;
 };
 
 function PropertyEditor({ property, onCancel, onSave, saving }: {
@@ -438,6 +454,9 @@ function PropertyEditor({ property, onCancel, onSave, saving }: {
     bedrooms: String(property?.bedrooms ?? 1), bathrooms: String(property?.bathrooms ?? 1), max_guests: String(property?.max_guests ?? 2),
     base_price: String(property?.base_price ?? 0), cleaning_fee: String(property?.cleaning_fee ?? 0), min_nights: String(property?.min_nights ?? 1),
     house_rules: property?.house_rules ?? "", cancellation_policy: property?.cancellation_policy ?? "",
+    phone: property?.phone ?? DEFAULT_PROPERTY_CONTACT.phone,
+    whatsapp: property?.whatsapp ?? DEFAULT_PROPERTY_CONTACT.whatsapp,
+    email: property?.email ?? DEFAULT_PROPERTY_CONTACT.email,
   });
   const field = (name: keyof PropertyFormValues, value: string) => setValues((current) => ({ ...current, [name]: value }));
   const slugFromName = (value: string) => field("slug", value.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""));
@@ -477,6 +496,26 @@ function PropertyEditor({ property, onCancel, onSave, saving }: {
         <FormField label="House rules"><Textarea value={values.house_rules} onChange={(e) => field("house_rules", e.target.value)} rows={3} /></FormField>
         <FormField label="Cancellation policy"><Textarea value={values.cancellation_policy} onChange={(e) => field("cancellation_policy", e.target.value)} rows={3} /></FormField>
       </div>
+      <div className="rounded-2xl border border-border bg-background p-4 sm:p-5">
+        <div className="mb-4">
+          <p className="text-sm font-semibold text-ink">Guest enquiries</p>
+          <p className="mt-1 text-xs leading-5 text-muted-foreground">
+            These details power the WhatsApp, Call and Email actions shown on the public property page.
+          </p>
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <FormField label="WhatsApp number">
+            <Input inputMode="tel" placeholder="+234…" value={values.whatsapp} onChange={(e) => field("whatsapp", e.target.value)} />
+          </FormField>
+          <FormField label="Phone number">
+            <Input inputMode="tel" placeholder="+234…" value={values.phone} onChange={(e) => field("phone", e.target.value)} />
+          </FormField>
+          <FormField label="Enquiries email">
+            <Input type="email" placeholder="hello@example.com" value={values.email} onChange={(e) => field("email", e.target.value)} />
+          </FormField>
+        </div>
+      </div>
+
       {property ? (
         <PropertyPhotos propertyId={property.id} photos={photos.data ?? []} />
       ) : (
@@ -659,6 +698,11 @@ function PropertyRow({
                     <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-secondary">
                       <div className="h-full rounded-full bg-brand" style={{ width: `${readiness.percent}%` }} />
                     </div>
+                    {readiness.missing.length > 0 && (
+                      <p className="mt-2 text-xs leading-5 text-muted-foreground">
+                        Missing: {readiness.missing.join(" · ")}
+                      </p>
+                    )}
                   </div>
                 );
               })()}
