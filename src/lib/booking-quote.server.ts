@@ -29,8 +29,10 @@ export const bookingSchema = quoteSchema.extend({
 export const num = (v: unknown) => Number(v ?? 0);
 
 export function pub() {
-  const key = process.env["SUPABASE_PUBLISHABLE_KEY"]!;
-  const client = createClient<Database>(process.env["SUPABASE_URL"]!, key, {
+  const key = process.env["SUPABASE_PUBLISHABLE_KEY"] || import.meta.env["VITE_SUPABASE_PUBLISHABLE_KEY"];
+  const url = process.env["SUPABASE_URL"] || import.meta.env["VITE_SUPABASE_URL"];
+  if (!url || !key) throw new Error("Missing Supabase environment variables.");
+  const client = createClient<Database>(url, key, {
     auth: { persistSession: false, autoRefreshToken: false },
     // Opaque sb_ keys are not JWTs; send apikey, not a Bearer header.
     global: {
