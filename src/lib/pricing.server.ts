@@ -86,7 +86,10 @@ export function computeQuote(
     let dateSpecific: number | null = null;
 
     for (const rule of rules) {
-      if (!inRange(date, rule.start_date, rule.end_date)) continue;
+      const applies = rule.rule_type === "weekend"
+        ? (!rule.start_date || !rule.end_date || inRange(date, rule.start_date, rule.end_date))
+        : inRange(date, rule.start_date, rule.end_date);
+      if (!applies) continue;
       const pct = Number(rule.price_modifier_percent ?? 0);
       switch (rule.rule_type) {
         case "weekend":
