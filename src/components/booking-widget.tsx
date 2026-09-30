@@ -240,10 +240,10 @@ export function BookingWidget({ property }: { property: PropertyDetailDto }) {
               onClick={book}
             >
               {submitting ? <Loader2 className="size-4 animate-spin" /> : null}
-              {submitting ? "Reserving…" : "Reserve your dates"}
+              {submitting ? "Sending…" : "Send reservation request"}
             </Button>
             <p className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
-              <ShieldCheck className="size-3.5" /> You won't be charged yet — payment links are sent after confirmation.
+              <ShieldCheck className="size-3.5" /> You won’t be charged on this page. Payment instructions are sent after your reservation is reviewed.
             </p>
           </div>
         ) : null}
