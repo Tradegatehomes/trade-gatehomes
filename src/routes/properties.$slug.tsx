@@ -12,8 +12,13 @@ import {
   Star,
   Users,
 } from "lucide-react";
+import { useState } from "react";
+import { CalendarCheck } from "lucide-react";
 import { BookingWidget } from "@/components/booking-widget";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { formatNaira } from "@/lib/format";
 import { getProperty } from "@/lib/properties.functions";
 
 const propertyQuery = (slug: string) =>
@@ -75,6 +80,7 @@ export const Route = createFileRoute("/properties/$slug")({
 
 function PropertyDetailPage() {
   const { data: property } = useSuspenseQuery(propertyQuery(Route.useParams().slug));
+  const [bookingOpen, setBookingOpen] = useState(false);
   if (!property) throw notFound();
   const p = property;
   const description = p.description?.replace("[PROPERTY DESCRIPTION] ", "").replace(
@@ -83,7 +89,7 @@ function PropertyDetailPage() {
   );
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-8">
+    <div className="mx-auto max-w-6xl px-4 pb-24 pt-8 lg:pb-8">
       {/* Title block */}
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
@@ -252,8 +258,74 @@ function PropertyDetailPage() {
 
         {/* Right: booking */}
         <div className="lg:sticky lg:top-24 lg:self-start">
-          <BookingWidget property={p} />
+          <div className="rounded-3xl border border-border bg-card p-6 shadow-card">
+            <p className="font-display text-2xl font-bold text-ink">
+              {formatNaira(p.base_price)}
+              <span className="text-sm font-medium text-muted-foreground"> / night</span>
+            </p>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Tap <strong className="text-ink">Book now</strong> to pick your dates, see the total and confirm your stay.
+            </p>
+            <Button size="lg" className="mt-4 w-full rounded-full text-base" onClick={() => setBookingOpen(true)}>
+              <CalendarCheck className="size-5" /> Book now
+            </Button>
+            <ContactButtons p={p} />
+          </div>
         </div>
+      </div>
+
+      {/* Mobile sticky bar */}
+      <div className="fixed inset-x-0 bottom-0 z-40 flex items-center justify-between gap-3 border-t border-border bg-card/95 px-4 py-3 backdrop-blur lg:hidden">
+        <p className="font-display text-lg font-bold text-ink">
+          {formatNaira(p.base_price)}
+          <span className="text-xs font-medium text-muted-foreground"> / night</span>
+        </p>
+        <Button className="rounded-full px-6" onClick={() => setBookingOpen(true)}>
+          <CalendarCheck className="size-4" /> Book now
+        </Button>
+      </div>
+
+      <Sheet open={bookingOpen} onOpenChange={setBookingOpen}>
+        <SheetContent side="right" className="w-full overflow-y-auto sm:max-w-lg">
+          <SheetHeader>
+            <SheetTitle>Book {p.name}</SheetTitle>
+            <SheetDescription>Choose your dates and guests, then confirm your booking.</SheetDescription>
+          </SheetHeader>
+          <div className="px-4 pb-6">
+            <BookingWidget property={p} />
+          </div>
+        </SheetContent>
+      </Sheet>
+    </div>
+  );
+}
+
+function ContactButtons({ p }: { p: { name: string; whatsapp?: string | null; phone?: string | null; email?: string | null } }) {
+  if (!p.whatsapp && !p.phone && !p.email) return null;
+  return (
+    <div className="mt-5 border-t border-border pt-4">
+      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Contact the host</p>
+      <div className="mt-3 grid grid-cols-3 gap-2">
+        {p.whatsapp && (
+          <a
+            href={`https://wa.me/${p.whatsapp.replace(/\D/g, "")}?text=${encodeURIComponent(`Hi! I'm interested in ${p.name}.`)}`}
+            target="_blank"
+            rel="noreferrer"
+            className="flex flex-col items-center gap-1 rounded-2xl border border-input py-3 text-xs font-semibold text-ink hover:bg-accent"
+          >
+            <MessageCircle className="size-5 text-brand" /> WhatsApp
+          </a>
+        )}
+        {p.phone && (
+          <a href={`tel:${p.phone}`} className="flex flex-col items-center gap-1 rounded-2xl border border-input py-3 text-xs font-semibold text-ink hover:bg-accent">
+            <Phone className="size-5 text-brand" /> Call
+          </a>
+        )}
+        {p.email && (
+          <a href={`mailto:${p.email}`} className="flex flex-col items-center gap-1 rounded-2xl border border-input py-3 text-xs font-semibold text-ink hover:bg-accent">
+            <Mail className="size-5 text-brand" /> Email
+          </a>
+        )}
       </div>
     </div>
   );
