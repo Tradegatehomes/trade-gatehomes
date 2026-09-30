@@ -72,8 +72,8 @@
 
 :root {
   --radius: 1rem;
-  --font-family-display: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
-  --font-family-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-family-display: "Cormorant Garamond", Georgia, serif;
+  --font-family-sans: "Manrope", ui-sans-serif, system-ui, sans-serif;
 
   --brand: oklch(0.64 0.115 75);
   --brand-foreground: oklch(0.99 0.005 80);
@@ -152,8 +152,8 @@
   h3,
   h4 {
     font-family: var(--font-family-display);
-    font-weight: 700;
-    letter-spacing: -0.02em;
+    font-weight: 600;
+    letter-spacing: -0.015em;
   }
 }
 
