@@ -67,10 +67,10 @@ function BookingConfirmationPage() {
           <CheckCircle2 className="size-8 text-teal" />
         </span>
         <h1 className="mt-5 font-display text-3xl font-bold tracking-tight text-ink">
-          Your stay is booked!
+          Reservation received
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Save this reference — you'll use it for check-in and any changes.
+          Save this reference. We’ll use it to confirm the stay, payment details and any changes.
         </p>
         <p className="mt-4 inline-block rounded-2xl bg-card px-6 py-3 font-display text-2xl font-bold tracking-wider text-ink shadow-card">
           {b.reference}
@@ -140,8 +140,7 @@ function BookingConfirmationPage() {
           </div>
           <div className="mt-4 flex items-start gap-2 rounded-xl bg-card p-3 text-xs text-muted-foreground">
             <ShieldCheck className="mt-0.5 size-4 shrink-0 text-teal" />
-            Payment links are sent after confirmation — you won't be charged on this page. This app
-            is a demo; no real payments are processed yet.
+            Payment is handled separately after the reservation is reviewed. You will not be charged on this page.
           </div>
         </div>
       </div>
@@ -150,12 +149,12 @@ function BookingConfirmationPage() {
         <div className="rounded-3xl bg-card p-6 shadow-card">
           <h3 className="font-display text-lg font-bold text-ink">Next steps</h3>
           <ol className="mt-3 list-decimal space-y-2 pl-5 text-sm text-muted-foreground">
-            <li>Watch your email for the payment link for {formatNaira(b.amountDueNow)}.</li>
-            <li>Once paid, your host confirms your booking.</li>
+            <li>Watch your email or WhatsApp for confirmation and payment instructions for {formatNaira(b.amountDueNow)}.</li>
+            <li>Once payment is completed, your host confirms the booking.</li>
             <li>
               {b.payDeposit
                 ? `Pay the remaining ${formatNaira(b.balanceAmount)} by ${formatDate(b.balanceDueDate)}.`
-                : "Nothing else to pay before arrival."}
+                : "Follow the payment instructions sent after confirmation."}
             </li>
             <li>Show your reference {b.reference} at check-in.</li>
           </ol>
@@ -163,7 +162,7 @@ function BookingConfirmationPage() {
         <div className="rounded-3xl bg-card p-6 shadow-card">
           <h3 className="font-display text-lg font-bold text-ink">Need to talk to someone?</h3>
           <p className="mt-2 text-sm text-muted-foreground">
-            Reference {b.reference} quoted, always.
+            Quote reference {b.reference} when contacting support.
           </p>
           <div className="mt-4 flex flex-wrap gap-3">
             {waNumber && (
