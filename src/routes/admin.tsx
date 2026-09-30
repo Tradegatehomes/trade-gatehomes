@@ -355,12 +355,12 @@ function Properties() {
       if (error) throw error;
       return data.id;
     },
-    onSuccess: (id) => {
-      toast.success("Property saved");
-      setEditing(null);
-      qc.invalidateQueries({ queryKey: ["admin-properties"] });
-      qc.invalidateQueries({ queryKey: ["properties"] });
-      if (id) qc.invalidateQueries({ queryKey: ["admin-property-images", id] });
+    onSuccess: async (id, variables) => {
+      toast.success(variables.id ? "Property updated" : "Draft saved — you can add photos now");
+      await qc.invalidateQueries({ queryKey: ["admin-properties"] });
+      await qc.invalidateQueries({ queryKey: ["properties"] });
+      if (id) await qc.invalidateQueries({ queryKey: ["admin-property-images", id] });
+      setEditing(variables.id ? null : id);
     },
     onError: (e) => toast.error(e instanceof Error ? e.message : "Save failed"),
   });
@@ -477,10 +477,32 @@ function PropertyEditor({ property, onCancel, onSave, saving }: {
         <FormField label="House rules"><Textarea value={values.house_rules} onChange={(e) => field("house_rules", e.target.value)} rows={3} /></FormField>
         <FormField label="Cancellation policy"><Textarea value={values.cancellation_policy} onChange={(e) => field("cancellation_policy", e.target.value)} rows={3} /></FormField>
       </div>
-      {property && <PropertyPhotos propertyId={property.id} photos={photos.data ?? []} />}
-      <div className="flex flex-wrap justify-end gap-2">
-        <Button variant="outline" onClick={onCancel}>Cancel</Button>
-        <Button disabled={saving || !values.name.trim() || !values.slug.trim() || !values.city.trim()} onClick={() => onSave(values)}>{saving ? "Saving…" : "Save listing"}</Button>
+      {property ? (
+        <PropertyPhotos propertyId={property.id} photos={photos.data ?? []} />
+      ) : (
+        <section className="rounded-2xl border border-dashed border-brand/30 bg-brand/5 p-4 sm:p-5">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-sm font-semibold text-ink">Listing photos</p>
+              <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                Save this listing as a draft first. The photo uploader will open here immediately after the draft is created.
+              </p>
+            </div>
+            <div className="inline-flex h-10 items-center justify-center rounded-full border border-input bg-background px-4 text-sm font-medium text-muted-foreground opacity-70">
+              Upload photos after saving
+            </div>
+          </div>
+        </section>
+      )}
+      <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+        <Button className="w-full sm:w-auto" variant="outline" onClick={onCancel}>Cancel</Button>
+        <Button
+          className="w-full sm:w-auto"
+          disabled={saving || !values.name.trim() || !values.slug.trim() || !values.city.trim()}
+          onClick={() => onSave(values)}
+        >
+          {saving ? "Saving…" : property ? "Save changes" : "Save draft & add photos"}
+        </Button>
       </div>
     </div>
   );
