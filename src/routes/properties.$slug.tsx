@@ -251,7 +251,7 @@ function PropertyDetailPage() {
               )}
             </div>
             <p className="mt-3 text-xs text-muted-foreground">
-              Contact details are placeholders — real host details appear once configured.
+              We usually respond within a few minutes — reach out any time.
             </p>
           </section>
         </div>
