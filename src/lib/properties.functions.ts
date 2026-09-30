@@ -1,5 +1,11 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+const DEFAULT_PROPERTY_CONTACT = {
+  phone: "+2347058860184",
+  whatsapp: "+2347058860184",
+  email: "tradegateconcept@gmail.com",
+};
+
 import {
   pub,
   num,
@@ -156,9 +162,9 @@ export const getProperty = createServerFn({ method: "GET" })
       check_out_time: r.check_out_time,
       house_rules: r.house_rules,
       cancellation_policy: r.cancellation_policy,
-      phone: r.phone,
-      whatsapp: r.whatsapp,
-      email: r.email,
+      phone: r.phone ?? DEFAULT_PROPERTY_CONTACT.phone,
+      whatsapp: r.whatsapp ?? DEFAULT_PROPERTY_CONTACT.whatsapp,
+      email: r.email ?? DEFAULT_PROPERTY_CONTACT.email,
       image: images[0]?.url ?? null,
       gallery: images.map((i: any) => i.url),
       images: images.map((i: any) => ({ url: i.url, alt_text: i.alt_text })),
