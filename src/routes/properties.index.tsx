@@ -105,7 +105,31 @@ function PropertiesPage() {
         {search.city ? ` in ${search.city}` : " across Nigeria"}.
       </p>
 
-      <div className="mt-4 rounded-2xl bg-card p-3 shadow-card sm:mt-6 sm:rounded-3xl sm:p-4">
+      {/* Mobile: collapsed search pill */}
+      <button
+        type="button"
+        onClick={() => setFiltersOpen((o) => !o)}
+        className="mt-4 flex w-full items-center gap-3 rounded-full bg-card px-4 py-3 shadow-card sm:hidden"
+        aria-expanded={filtersOpen}
+      >
+        <span className="grid size-8 shrink-0 place-items-center rounded-full bg-brand text-brand-foreground">
+          <Search className="size-4" />
+        </span>
+        <span className="min-w-0 flex-1 truncate text-left text-sm font-medium text-ink">
+          {search.city || "Search stays"}
+          {search.checkIn && search.checkOut
+            ? ` · ${search.checkIn} → ${search.checkOut}`
+            : ""}
+          {search.guests ? ` · ${search.guests} guests` : ""}
+        </span>
+        <span className="shrink-0 text-xs font-semibold text-brand">
+          {filtersOpen ? "Hide" : "Filters"}
+        </span>
+      </button>
+
+      <div
+        className={`${filtersOpen ? "block" : "hidden"} mt-4 rounded-2xl bg-card p-3 shadow-card sm:mt-6 sm:block sm:rounded-3xl sm:p-4`}
+      >
         <SearchBar
           initial={{
             ...(search.city ? { city: search.city } : {}),
