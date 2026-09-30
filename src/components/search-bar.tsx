@@ -51,88 +51,95 @@ export function SearchBar({ initial, variant = "compact" }: SearchBarProps) {
       : "h-10 rounded-xl border-input bg-card text-sm";
 
   const mobileInput =
-    "h-14 w-full min-w-0 rounded-2xl border border-border bg-card px-4 pt-5 text-sm text-ink shadow-sm outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/15";
+    "h-12 w-full min-w-0 max-w-full rounded-xl border border-input bg-background px-3 text-base text-ink shadow-none outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/15";
   const mobileLabel =
-    "pointer-events-none absolute left-11 top-2 text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground";
+    "mb-1.5 block text-[11px] font-bold uppercase tracking-[0.14em] text-muted-foreground";
 
   const mobileFields = (
     <form
       onSubmit={submit}
-      className={`w-full max-w-full overflow-hidden rounded-[1.75rem] border border-border/80 bg-card p-3 shadow-card md:hidden ${variant === "hero" ? "space-y-2.5" : "space-y-2"}`}
+      className="w-full max-w-full overflow-hidden rounded-3xl border border-border/80 bg-card p-4 shadow-card md:hidden"
     >
-      <label className="relative block">
-        <MapPin className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-brand" />
-        <span className={mobileLabel}>Where</span>
-        <input
-          value={city}
-          onChange={(e) => setCity(e.target.value)}
-          placeholder="City, area or state"
-          className={`${mobileInput} pl-11`}
-          autoComplete="address-level2"
-        />
-      </label>
+      <div className="space-y-4">
+        <label className="block min-w-0">
+          <span className={mobileLabel}>Where</span>
+          <div className="relative">
+            <MapPin className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-brand" />
+            <input
+              value={city}
+              onChange={(e) => setCity(e.target.value)}
+              placeholder="City, area or state"
+              className={`${mobileInput} pl-10`}
+              autoComplete="address-level2"
+            />
+          </div>
+        </label>
 
-      <div className={variant === "hero" ? "grid gap-2.5" : "grid grid-cols-2 gap-2"}>
-        <label className="relative block min-w-0">
-          <CalendarDays className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-brand" />
+        <label className="block min-w-0">
           <span className={mobileLabel}>Check-in</span>
-          <input
-            type="date"
-            min={today}
-            value={checkIn}
-            onChange={(e) => {
-              setCheckIn(e.target.value);
-              if (checkOut && e.target.value && checkOut <= e.target.value) setCheckOut("");
-            }}
-            className={`${mobileInput} pl-11 pr-3 [color-scheme:light]`}
-            aria-label="Check-in date"
-          />
+          <div className="relative">
+            <CalendarDays className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-brand" />
+            <input
+              type="date"
+              min={today}
+              value={checkIn}
+              onChange={(e) => {
+                setCheckIn(e.target.value);
+                if (checkOut && e.target.value && checkOut <= e.target.value) setCheckOut("");
+              }}
+              className={`${mobileInput} appearance-none pl-10 pr-3 [color-scheme:light]`}
+              aria-label="Check-in date"
+            />
+          </div>
         </label>
 
-        <label className="relative block min-w-0">
-          <CalendarDays className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-brand" />
+        <label className="block min-w-0">
           <span className={mobileLabel}>Check-out</span>
-          <input
-            type="date"
-            min={checkIn || today}
-            value={checkOut}
-            onChange={(e) => setCheckOut(e.target.value)}
-            className={`${mobileInput} pl-11 pr-3 [color-scheme:light]`}
-            aria-label="Check-out date"
-          />
+          <div className="relative">
+            <CalendarDays className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-brand" />
+            <input
+              type="date"
+              min={checkIn || today}
+              value={checkOut}
+              onChange={(e) => setCheckOut(e.target.value)}
+              className={`${mobileInput} appearance-none pl-10 pr-3 [color-scheme:light]`}
+              aria-label="Check-out date"
+            />
+          </div>
         </label>
-      </div>
 
-      <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2">
-        <label className="relative block min-w-0">
-          <Users className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-brand" />
+        <label className="block min-w-0">
           <span className={mobileLabel}>Guests</span>
-          <select
-            value={guests}
-            onChange={(e) => setGuests(Number(e.target.value))}
-            className={`${mobileInput} appearance-none pl-11 pr-9`}
-            aria-label="Number of guests"
-          >
-            {[1, 2, 3, 4, 5, 6, 8, 10].map((n) => (
-              <option key={n} value={n}>
-                {n} {n === 1 ? "guest" : "guests"}
-              </option>
-            ))}
-          </select>
+          <div className="relative">
+            <Users className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-brand" />
+            <select
+              value={guests}
+              onChange={(e) => setGuests(Number(e.target.value))}
+              className={`${mobileInput} appearance-none pl-10 pr-10`}
+              aria-label="Number of guests"
+            >
+              {[1, 2, 3, 4, 5, 6, 8, 10].map((n) => (
+                <option key={n} value={n}>
+                  {n} {n === 1 ? "guest" : "guests"}
+                </option>
+              ))}
+            </select>
+            <ChevronDown className="pointer-events-none absolute right-3.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          </div>
         </label>
 
         <Button
           type="submit"
-          className="h-14 rounded-2xl px-5 font-display text-sm font-semibold shadow-sm active:scale-[0.98]"
+          className="h-12 w-full rounded-xl font-display text-base font-semibold shadow-sm active:scale-[0.99]"
         >
           <Search className="size-4" />
-          <span className="hidden min-[360px]:inline">Search</span>
+          Search stays
         </Button>
-      </div>
 
-      {error ? (
-        <p className="px-2 pt-1 text-xs font-semibold text-destructive" role="alert">{error}</p>
-      ) : null}
+        {error ? (
+          <p className="text-xs font-semibold text-destructive" role="alert">{error}</p>
+        ) : null}
+      </div>
     </form>
   );
 
