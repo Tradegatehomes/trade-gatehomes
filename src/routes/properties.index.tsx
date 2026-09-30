@@ -95,16 +95,16 @@ function PropertiesPage() {
   ].filter(Boolean) as { label: string; value: string }[];
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-10">
-      <h1 className="font-display text-3xl font-bold tracking-tight text-ink sm:text-4xl">
+    <div className="mx-auto max-w-6xl px-4 py-6 sm:py-10">
+      <h1 className="font-display text-2xl font-bold tracking-tight text-ink sm:text-4xl">
         Browse stays
       </h1>
-      <p className="mt-2 text-sm text-muted-foreground">
+      <p className="mt-1 text-sm text-muted-foreground sm:mt-2">
         {properties.length} {properties.length === 1 ? "home" : "homes"} available
         {search.city ? ` in ${search.city}` : " across Nigeria"}.
       </p>
 
-      <div className="mt-6 rounded-3xl bg-card p-4 shadow-card">
+      <div className="mt-4 rounded-2xl bg-card p-3 shadow-card sm:mt-6 sm:rounded-3xl sm:p-4">
         <SearchBar
           initial={{
             ...(search.city ? { city: search.city } : {}),
@@ -116,34 +116,40 @@ function PropertiesPage() {
       </div>
 
       {/* Filter row */}
-      <div className="mt-4 flex flex-wrap items-center gap-3">
-        <div className="flex items-center gap-2">
+      <div className="mt-3 flex flex-nowrap items-center gap-2 sm:mt-4 sm:flex-wrap sm:gap-3">
+        <div className="flex min-w-0 flex-1 items-center gap-1 rounded-lg border border-input bg-card px-2 py-1 sm:flex-none sm:gap-2 sm:rounded-none sm:border-0 sm:bg-transparent sm:p-0">
           <Input
             type="number"
             placeholder="Min ₦"
-            className="w-28"
+            className="h-7 min-w-0 flex-1 border-0 bg-transparent px-1 text-xs shadow-none focus-visible:ring-0 sm:h-10 sm:w-28 sm:flex-none sm:rounded-md sm:border sm:bg-card sm:px-3 sm:text-sm"
             value={minPrice}
             onChange={(e) => setMinPrice(e.target.value)}
           />
-          <span className="text-sm text-muted-foreground">–</span>
+          <span className="text-xs text-muted-foreground sm:text-sm">–</span>
           <Input
             type="number"
             placeholder="Max ₦"
-            className="w-28"
+            className="h-7 min-w-0 flex-1 border-0 bg-transparent px-1 text-xs shadow-none focus-visible:ring-0 sm:h-10 sm:w-28 sm:flex-none sm:rounded-md sm:border sm:bg-card sm:px-3 sm:text-sm"
             value={maxPrice}
             onChange={(e) => setMaxPrice(e.target.value)}
           />
-          <Button variant="outline" className="rounded-full" onClick={applyPrice}>
-            <Search className="mr-1 size-4" /> Apply
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-7 shrink-0 rounded-md px-2 text-[11px] font-bold uppercase sm:h-10 sm:rounded-full sm:px-4 sm:text-sm sm:font-normal sm:normal-case"
+            onClick={applyPrice}
+          >
+            <Search className="size-3 sm:mr-1 sm:size-4" />
+            <span className="hidden sm:inline">Apply</span>
           </Button>
         </div>
-        <div className="ml-auto flex items-center gap-2">
-          <span className="text-sm font-medium text-ink/70">Sort</span>
+        <div className="flex shrink-0 items-center gap-2 sm:ml-auto">
+          <span className="hidden text-sm font-medium text-ink/70 sm:inline">Sort</span>
           <Select
             value={search.sort ?? "featured"}
             onValueChange={(v) => setSearch({ sort: v === "featured" ? undefined : v })}
           >
-            <SelectTrigger className="w-44 rounded-full">
+            <SelectTrigger className="h-9 w-32 rounded-lg text-xs sm:h-10 sm:w-44 sm:rounded-full sm:text-sm">
               <SelectValue placeholder="Sort" />
             </SelectTrigger>
             <SelectContent>
