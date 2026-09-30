@@ -103,8 +103,9 @@ export async function buildQuote(
       (!d.start_date || d.start_date <= today) && (!d.end_date || d.end_date >= today);
     const propertyMatch = !d.property_id || d.property_id === p.id;
     const withinLimit = d.usage_limit == null || d.times_used < d.usage_limit;
-    if (!withinDates || !propertyMatch || !withinLimit) {
-      throw new Error(`Code ${code} is not valid right now.`);
+    const meetsNights = d.min_nights == null || nights >= d.min_nights;
+    if (!withinDates || !propertyMatch || !withinLimit || !meetsNights) {
+      throw new Error(`Code ${code} is not valid for this stay.`);
     }
     discount = d;
   }
