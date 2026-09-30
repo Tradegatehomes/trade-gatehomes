@@ -128,7 +128,22 @@ const card = "rounded-3xl border border-border/80 bg-card p-5 shadow-sm";
 
 type AdminProperty = Database["public"]["Tables"]["properties"]["Row"] & {
   property_images?: { url: string; is_primary: boolean; sort_order: number }[];
+  property_amenities?: { amenity_id: string }[];
 };
+
+function propertyReadiness(p: AdminProperty) {
+  const checks = [
+    Boolean(p.name && p.slug && p.city && p.address),
+    Boolean(p.description && p.description.trim().length >= 40),
+    Number(p.base_price) > 0,
+    (p.property_images?.length ?? 0) >= 4,
+    (p.property_amenities?.length ?? 0) >= 3,
+    Boolean(p.house_rules),
+    Boolean(p.cancellation_policy),
+  ];
+  const completed = checks.filter(Boolean).length;
+  return { completed, total: checks.length, percent: Math.round((completed / checks.length) * 100) };
+}
 
 function useProps() {
   return useQuery({
@@ -136,7 +151,7 @@ function useProps() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("properties")
-        .select("*,property_images(url,is_primary,sort_order)")
+        .select("*,property_images(url,is_primary,sort_order),property_amenities(amenity_id)")
         .order("name");
       if (error) throw error;
       return data as AdminProperty[];
@@ -197,9 +212,29 @@ function Overview() {
           </div>
         </div>
         <div className="rounded-3xl bg-ink p-6 text-white shadow-sm">
-          <p className="text-xs font-bold uppercase tracking-[0.18em] text-white/60">Quick start</p>
-          <h3 className="mt-2 font-display text-xl font-bold">Manage listings</h3>
-          <p className="mt-2 text-sm text-white/70">Create a property, add photos, set pricing and publish when ready.</p>
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-white/60">Needs attention</p>
+          <h3 className="mt-2 font-display text-xl font-bold">Listing readiness</h3>
+          <div className="mt-4 space-y-3">
+            {(props.data ?? [])
+              .map((p) => ({ p, readiness: propertyReadiness(p) }))
+              .filter(({ readiness }) => readiness.percent < 100)
+              .sort((a, b) => a.readiness.percent - b.readiness.percent)
+              .slice(0, 3)
+              .map(({ p, readiness }) => (
+                <div key={p.id}>
+                  <div className="flex items-center justify-between gap-3 text-sm">
+                    <span className="truncate font-semibold">{p.name}</span>
+                    <span className="text-white/70">{readiness.percent}%</span>
+                  </div>
+                  <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-white/15">
+                    <div className="h-full rounded-full bg-white" style={{ width: `${readiness.percent}%` }} />
+                  </div>
+                </div>
+              ))}
+            {!props.isLoading && (props.data ?? []).every((p) => propertyReadiness(p).percent === 100) && (
+              <p className="text-sm text-white/70">All listings have the essentials in place.</p>
+            )}
+          </div>
         </div>
       </div>
     </div>
@@ -560,6 +595,20 @@ function PropertyRow({
               </div>
               <p className="mt-1 text-sm text-muted-foreground">{p.city}{p.state ? `, ${p.state}` : ""} · {p.property_type}</p>
               <p className="mt-2 text-sm text-muted-foreground">{p.bedrooms} bed · {p.bathrooms} bath · up to {p.max_guests} guests · {photos.length} photos</p>
+              {(() => {
+                const readiness = propertyReadiness(p);
+                return (
+                  <div className="mt-3 max-w-sm">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="font-semibold text-ink">Listing completeness</span>
+                      <span className="text-muted-foreground">{readiness.percent}%</span>
+                    </div>
+                    <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-secondary">
+                      <div className="h-full rounded-full bg-brand" style={{ width: `${readiness.percent}%` }} />
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
             <div className="text-left md:text-right">
               <p className="text-xs uppercase tracking-wide text-muted-foreground">Nightly rate</p>
