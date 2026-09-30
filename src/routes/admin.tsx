@@ -349,7 +349,7 @@ function Properties() {
   const [search, setSearch] = useState("");
   const save = useMutation({
     mutationFn: async ({ id, values }: { id: string | null; values: PropertyFormValues }) => {
-      const { name, slug, city, state, address, property_type, description, bedrooms, bathrooms, max_guests, base_price, cleaning_fee, min_nights, house_rules, cancellation_policy, phone, whatsapp, email } = values;
+      const { name, slug, city, state, address, property_type, description, bedrooms, bathrooms, max_guests, base_price, cleaning_fee, min_nights, house_rules, cancellation_policy, phone, whatsapp, email, amenity_ids } = values;
       const fields = {
         name: name.trim(), slug: slug.trim(), city: city.trim(), state: state.trim() || null,
         address: address.trim() || null, property_type: property_type.trim() || "Apartment",
@@ -361,20 +361,33 @@ function Properties() {
         whatsapp: whatsapp.trim() || null,
         email: email.trim().toLowerCase() || null,
       };
+      let propertyId = id;
       if (id) {
         const { error } = await supabase.from("properties").update(fields).eq("id", id);
         if (error) throw error;
-        return id;
+      } else {
+        const { data, error } = await supabase.from("properties").insert({ ...fields, status: "draft" }).select("id").single();
+        if (error) throw error;
+        propertyId = data.id;
       }
-      const { data, error } = await supabase.from("properties").insert({ ...fields, status: "draft" }).select("id").single();
-      if (error) throw error;
-      return data.id;
+
+      if (!propertyId) throw new Error("Property could not be saved.");
+      const { error: clearAmenitiesError } = await supabase.from("property_amenities").delete().eq("property_id", propertyId);
+      if (clearAmenitiesError) throw clearAmenitiesError;
+      if (amenity_ids.length > 0) {
+        const { error: amenityError } = await supabase.from("property_amenities").insert(
+          amenity_ids.map((amenity_id) => ({ property_id: propertyId!, amenity_id })),
+        );
+        if (amenityError) throw amenityError;
+      }
+      return propertyId;
     },
     onSuccess: async (id, variables) => {
       toast.success(variables.id ? "Property updated" : "Draft saved — you can add photos now");
       await qc.invalidateQueries({ queryKey: ["admin-properties"] });
       await qc.invalidateQueries({ queryKey: ["properties"] });
       if (id) await qc.invalidateQueries({ queryKey: ["admin-property-images", id] });
+      await qc.invalidateQueries({ queryKey: ["admin-property-amenities"] });
       setEditing(variables.id ? null : id);
     },
     onError: (e) => toast.error(e instanceof Error ? e.message : "Save failed"),
@@ -439,11 +452,11 @@ type PropertyFormValues = {
   name: string; slug: string; city: string; state: string; address: string; property_type: string;
   description: string; bedrooms: string; bathrooms: string; max_guests: string; base_price: string;
   cleaning_fee: string; min_nights: string; house_rules: string; cancellation_policy: string;
-  phone: string; whatsapp: string; email: string;
+  phone: string; whatsapp: string; email: string; amenity_ids: string[];
 };
 
 function PropertyEditor({ property, onCancel, onSave, saving }: {
-  property?: Database["public"]["Tables"]["properties"]["Row"];
+  property?: AdminProperty;
   onCancel: () => void;
   onSave: (values: PropertyFormValues) => void;
   saving: boolean;
@@ -457,10 +470,26 @@ function PropertyEditor({ property, onCancel, onSave, saving }: {
     phone: property?.phone ?? DEFAULT_PROPERTY_CONTACT.phone,
     whatsapp: property?.whatsapp ?? DEFAULT_PROPERTY_CONTACT.whatsapp,
     email: property?.email ?? DEFAULT_PROPERTY_CONTACT.email,
+    amenity_ids: property?.property_amenities?.map((item) => item.amenity_id) ?? [],
   });
-  const field = (name: keyof PropertyFormValues, value: string) => setValues((current) => ({ ...current, [name]: value }));
+  const field = (name: Exclude<keyof PropertyFormValues, "amenity_ids">, value: string) => setValues((current) => ({ ...current, [name]: value }));
   const slugFromName = (value: string) => field("slug", value.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""));
   const photos = usePropertyPhotos(property?.id);
+  const amenities = useQuery({
+    queryKey: ["admin-amenities"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("amenities").select("id,name").order("name");
+      if (error) throw error;
+      return data;
+    },
+  });
+  const toggleAmenity = (amenityId: string) =>
+    setValues((current) => ({
+      ...current,
+      amenity_ids: current.amenity_ids.includes(amenityId)
+        ? current.amenity_ids.filter((id) => id !== amenityId)
+        : [...current.amenity_ids, amenityId],
+    }));
   return (
     <div className={`${card} space-y-6 border-brand/20`}>
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -496,6 +525,35 @@ function PropertyEditor({ property, onCancel, onSave, saving }: {
         <FormField label="House rules"><Textarea value={values.house_rules} onChange={(e) => field("house_rules", e.target.value)} rows={3} /></FormField>
         <FormField label="Cancellation policy"><Textarea value={values.cancellation_policy} onChange={(e) => field("cancellation_policy", e.target.value)} rows={3} /></FormField>
       </div>
+      <div className="rounded-2xl border border-border bg-background p-4 sm:p-5">
+        <div className="mb-4">
+          <p className="text-sm font-semibold text-ink">Amenities</p>
+          <p className="mt-1 text-xs leading-5 text-muted-foreground">
+            Select everything included with this property. Choose at least three for a complete listing.
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {(amenities.data ?? []).map((amenity) => {
+            const selected = values.amenity_ids.includes(amenity.id);
+            return (
+              <Button
+                key={amenity.id}
+                type="button"
+                size="sm"
+                variant={selected ? "default" : "outline"}
+                className="rounded-full"
+                onClick={() => toggleAmenity(amenity.id)}
+              >
+                {selected ? "✓ " : ""}{amenity.name}
+              </Button>
+            );
+          })}
+          {!amenities.isLoading && (amenities.data ?? []).length === 0 && (
+            <p className="text-sm text-muted-foreground">No amenities have been created yet.</p>
+          )}
+        </div>
+      </div>
+
       <div className="rounded-2xl border border-border bg-background p-4 sm:p-5">
         <div className="mb-4">
           <p className="text-sm font-semibold text-ink">Guest enquiries</p>
