@@ -1,6 +1,7 @@
 import { createFileRoute, notFound, Link } from "@tanstack/react-router";
 import { useSuspenseQuery, queryOptions } from "@tanstack/react-query";
 import {
+  ArrowLeft,
   Bath,
   BedDouble,
   CheckCircle2,
@@ -91,7 +92,13 @@ function PropertyDetailPage() {
   );
 
   return (
-    <div className="mx-auto max-w-6xl px-4 pb-24 pt-8 lg:pb-8">
+    <div className="mx-auto max-w-6xl px-4 pb-24 pt-6 lg:pb-8">
+      <Link
+        to="/properties"
+        className="mb-5 inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-2 text-sm font-semibold text-ink shadow-sm transition hover:bg-secondary"
+      >
+        <ArrowLeft className="size-4" /> Back to browse
+      </Link>
       {/* Title block */}
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
