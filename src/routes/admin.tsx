@@ -491,31 +491,53 @@ function PropertyRow({
   onEdit,
   editing,
 }: {
-  p: Database["public"]["Tables"]["properties"]["Row"];
+  p: AdminProperty;
   onSave: (patch: { base_price?: number; status?: PropertyStatus; featured?: boolean }) => void;
   onEdit: () => void;
   editing: boolean;
 }) {
   const [price, setPrice] = useState(String(p.base_price));
+  const photos = [...(p.property_images ?? [])].sort((a, b) => Number(b.is_primary) - Number(a.is_primary) || a.sort_order - b.sort_order);
+  const cover = photos[0]?.url;
   return (
-    <div className={`${card} flex flex-wrap items-center justify-between gap-3`}>
-      <div>
-        <p className="font-semibold text-ink">{p.name}</p>
-        <p className="text-sm text-muted-foreground">{p.city}</p>
-      </div>
-      <div className="flex flex-wrap items-center gap-2">
-        <Button size="sm" variant="outline" onClick={onEdit}>{editing ? "Close editor" : "Edit listing"}</Button>
-        <Input className="w-32" type="number" min={0} value={price} onChange={(e) => setPrice(e.target.value)} aria-label="Nightly price" />
-        <Button size="sm" variant="outline" onClick={() => onSave({ base_price: Number(price) })}>Save price</Button>
-        <Button size="sm" variant={p.featured ? "default" : "outline"} onClick={() => onSave({ featured: !p.featured })}>
-          {p.featured ? "Featured" : "Not featured"}
-        </Button>
-        <Select value={p.status} onValueChange={(v) => onSave({ status: v as PropertyStatus })}>
-          <SelectTrigger className="w-36 capitalize"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            {PROPERTY_STATUSES.map((s) => <SelectItem key={s} value={s} className="capitalize">{s}</SelectItem>)}
-          </SelectContent>
-        </Select>
+    <div className={card + " overflow-hidden p-0"}>
+      <div className="grid md:grid-cols-[220px_1fr]">
+        <div className="min-h-44 bg-secondary">
+          {cover ? <img src={cover} alt={p.name} className="h-full min-h-44 w-full object-cover" /> : <div className="flex h-full min-h-44 items-center justify-center px-6 text-center text-sm text-muted-foreground">No cover photo yet</div>}
+        </div>
+        <div className="p-5">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <div className="flex flex-wrap items-center gap-2">
+                <p className="font-display text-xl font-bold text-ink">{p.name}</p>
+                <Badge variant={p.status === "active" ? "default" : "secondary"} className="capitalize">{p.status}</Badge>
+                {p.featured && <Badge variant="outline">Featured</Badge>}
+              </div>
+              <p className="mt-1 text-sm text-muted-foreground">{p.city}{p.state ? `, ${p.state}` : ""} · {p.property_type}</p>
+              <p className="mt-2 text-sm text-muted-foreground">{p.bedrooms} bed · {p.bathrooms} bath · up to {p.max_guests} guests · {photos.length} photos</p>
+            </div>
+            <div className="text-left md:text-right">
+              <p className="text-xs uppercase tracking-wide text-muted-foreground">Nightly rate</p>
+              <p className="mt-1 font-display text-xl font-bold text-ink">{formatNaira(Number(p.base_price))}</p>
+            </div>
+          </div>
+          <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-border pt-4">
+            <Button size="sm" onClick={onEdit}>{editing ? "Close editor" : "Manage listing"}</Button>
+            <div className="flex items-center gap-2">
+              <Input className="w-32" type="number" min={0} value={price} onChange={(e) => setPrice(e.target.value)} aria-label={`Nightly price for ${p.name}`} />
+              <Button size="sm" variant="outline" onClick={() => onSave({ base_price: Number(price) })}>Update rate</Button>
+            </div>
+            <Button size="sm" variant={p.featured ? "default" : "outline"} onClick={() => onSave({ featured: !p.featured })}>
+              {p.featured ? "Featured" : "Feature listing"}
+            </Button>
+            <Select value={p.status} onValueChange={(v) => onSave({ status: v as PropertyStatus })}>
+              <SelectTrigger className="w-36 capitalize"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {PROPERTY_STATUSES.map((s) => <SelectItem key={s} value={s} className="capitalize">{s}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
       </div>
     </div>
   );
