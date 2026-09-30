@@ -3,7 +3,6 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -62,10 +61,6 @@ function AuthPage() {
     }
   }
 
-  async function google() {
-    const res = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin + "/auth" });
-    if (res.error) toast.error(res.error instanceof Error ? res.error.message : "Google sign-in failed");
-  }
 
   return (
     <div className="mx-auto max-w-md px-4 py-16">
@@ -76,13 +71,7 @@ function AuthPage() {
         <p className="mt-2 text-sm text-muted-foreground">
           {mode === "signin" ? "Sign in to see your trips." : "Book faster and keep all your stays in one place."}
         </p>
-        <Button variant="outline" className="mt-6 w-full rounded-full" onClick={google}>
-          Continue with Google
-        </Button>
-        <div className="my-5 flex items-center gap-3 text-xs text-muted-foreground">
-          <span className="h-px flex-1 bg-border" /> or <span className="h-px flex-1 bg-border" />
-        </div>
-        <form onSubmit={submit} className="space-y-4">
+        <form onSubmit={submit} className="mt-6 space-y-4">
           {mode === "signup" && (
             <div className="space-y-1.5">
               <Label htmlFor="name">Full name</Label>
