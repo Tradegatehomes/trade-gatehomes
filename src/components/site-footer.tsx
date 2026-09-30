@@ -10,11 +10,13 @@ export function SiteFooter() {
     <footer className="mt-20 border-t border-border/70 bg-card">
       <div className="mx-auto grid max-w-6xl gap-10 px-4 py-12 sm:grid-cols-2 lg:grid-cols-4">
         <div>
-          <img
-            src="/tradegate-logo.svg"
-            alt="TradeGate Continental Homes"
-            className="h-32 w-auto object-contain object-left"
-          />
+          <div className="flex items-center gap-3">
+            <img src="/tradegate-icon.png" alt="" aria-hidden="true" className="h-20 w-28 object-contain object-left" />
+            <div className="leading-tight">
+              <p className="font-display text-xl font-bold tracking-wide text-ink">TRADEGATE</p>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-brand">Continental Homes</p>
+            </div>
+          </div>
           <p className="mt-3 max-w-xs text-sm text-muted-foreground">
             Comfort • Class • Convenience — book verified shortlet apartments across Nigeria with
             clear pricing and real availability.
