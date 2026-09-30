@@ -116,23 +116,42 @@ function Overview() {
       return data;
     },
   });
+  const props = useProps();
   const rows = q.data ?? [];
   const live = rows.filter((b) => !["cancelled", "refunded"].includes(b.status));
   const today = new Date().toISOString().slice(0, 10);
   const stats = [
-    { label: "Total bookings", value: String(rows.length) },
-    { label: "Pending", value: String(rows.filter((b) => b.status === "pending").length) },
+    { label: "Live properties", value: String((props.data ?? []).filter((p) => p.status === "active").length) },
+    { label: "Pending bookings", value: String(rows.filter((b) => b.status === "pending").length) },
     { label: "Upcoming check-ins", value: String(live.filter((b) => b.check_in >= today).length) },
     { label: "Booked value", value: formatNaira(live.reduce((s, b) => s + Number(b.total_amount), 0)) },
   ];
   return (
-    <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-      {stats.map((s) => (
-        <div key={s.label} className={card}>
-          <p className="text-sm text-muted-foreground">{s.label}</p>
-          <p className="mt-2 font-display text-3xl font-bold text-ink">{q.isLoading ? "…" : s.value}</p>
+    <div className="mt-6 space-y-6">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {stats.map((s) => (
+          <div key={s.label} className={card}>
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{s.label}</p>
+            <p className="mt-3 font-display text-3xl font-bold text-ink">{q.isLoading || props.isLoading ? "…" : s.value}</p>
+          </div>
+        ))}
+      </div>
+      <div className="grid gap-4 lg:grid-cols-[1.3fr_0.7fr]">
+        <div className={card}>
+          <h3 className="font-display text-xl font-bold text-ink">Operations snapshot</h3>
+          <p className="mt-1 text-sm text-muted-foreground">Monitor your live listings and guest activity, then use the tabs above to manage each area.</p>
+          <div className="mt-5 grid gap-3 sm:grid-cols-3">
+            <div className="rounded-2xl bg-secondary/70 p-4"><p className="text-xs text-muted-foreground">All bookings</p><p className="mt-1 text-2xl font-bold text-ink">{rows.length}</p></div>
+            <div className="rounded-2xl bg-secondary/70 p-4"><p className="text-xs text-muted-foreground">Active listings</p><p className="mt-1 text-2xl font-bold text-ink">{(props.data ?? []).filter((p) => p.status === "active").length}</p></div>
+            <div className="rounded-2xl bg-secondary/70 p-4"><p className="text-xs text-muted-foreground">Featured listings</p><p className="mt-1 text-2xl font-bold text-ink">{(props.data ?? []).filter((p) => p.featured).length}</p></div>
+          </div>
         </div>
-      ))}
+        <div className="rounded-3xl bg-ink p-6 text-white shadow-sm">
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-white/60">Quick start</p>
+          <h3 className="mt-2 font-display text-xl font-bold">Manage listings</h3>
+          <p className="mt-2 text-sm text-white/70">Create a property, add photos, set pricing and publish when ready.</p>
+        </div>
+      </div>
     </div>
   );
 }
