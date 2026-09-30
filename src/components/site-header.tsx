@@ -4,7 +4,6 @@ import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
-import logoAsset from "@/assets/tradegate-continental-homes-logo.png.asset.json";
 
 export function SiteHeader() {
   const [open, setOpen] = useState(false);
@@ -19,9 +18,9 @@ export function SiteHeader() {
       <div className="mx-auto flex h-20 max-w-6xl items-center justify-between gap-4 px-4">
         <Link to="/" aria-label="TradeGate Continental Homes home" className="shrink-0">
           <img
-            src={logoAsset.url}
+            src="/tradegate-logo.svg"
             alt="TradeGate Continental Homes"
-            className="h-16 w-auto object-contain mix-blend-multiply"
+            className="h-16 w-auto object-contain"
           />
         </Link>
 
@@ -53,9 +52,9 @@ export function SiteHeader() {
           <SheetContent side="right" className="w-72">
             <SheetTitle>
               <img
-                src={logoAsset.url}
+                src="/tradegate-logo.svg"
                 alt="TradeGate Continental Homes"
-                className="h-24 w-auto object-contain mix-blend-multiply"
+                className="h-24 w-auto object-contain"
               />
             </SheetTitle>
             <nav className="mt-6 flex flex-col gap-1">
