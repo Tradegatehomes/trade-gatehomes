@@ -260,7 +260,7 @@ function PropertyDetailPage() {
       </div>
 
       {/* Mobile sticky bar */}
-      <div className="fixed inset-x-0 bottom-0 z-40 flex items-center justify-between gap-3 border-t border-border bg-card/95 px-4 py-3 backdrop-blur lg:hidden">
+      <div className="fixed inset-x-0 bottom-0 z-40 flex items-center justify-between gap-3 border-t border-border bg-card/95 px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] backdrop-blur lg:hidden">
         <p className="font-display text-lg font-bold text-ink">
           {formatNaira(p.base_price)}
           <span className="text-xs font-medium text-muted-foreground"> / night</span>
@@ -292,7 +292,7 @@ function PropertyGallery({ images, name }: { images: { url: string; alt_text: st
     <div className="mt-6">
       <div className="relative -mx-4 sm:hidden">
         <div
-          className="flex snap-x snap-mandatory gap-2 overflow-x-auto px-4 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          className="flex snap-x snap-mandatory gap-2 overflow-x-auto overscroll-x-contain px-4 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           onScroll={(e) => {
             const el = e.currentTarget;
             const itemWidth = el.firstElementChild?.getBoundingClientRect().width ?? el.clientWidth;
