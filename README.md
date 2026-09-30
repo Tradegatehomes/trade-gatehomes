@@ -1,6 +1,6 @@
 # Tradegates
 
-Implement exactly the screenshot and nothing else
+Implement exactly the screenshot and nothing else.
 
 
 
