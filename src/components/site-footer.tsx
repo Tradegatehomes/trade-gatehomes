@@ -1,6 +1,10 @@
 import { Link } from "@tanstack/react-router";
-import { Mail, Phone } from "lucide-react";
+import { Mail, MessageCircle, Phone } from "lucide-react";
 import logoAsset from "@/assets/tradegate-continental-homes-logo.png.asset.json";
+
+const WHATSAPP = "+2347058860184";
+const EMAIL = "tradegateconcept@gmail.com";
+const whatsappLink = `https://wa.me/${WHATSAPP.replace(/\D/g, "")}`;
 
 export function SiteFooter() {
   return (
@@ -13,8 +17,8 @@ export function SiteFooter() {
             className="h-32 w-auto object-contain object-left mix-blend-multiply"
           />
           <p className="mt-3 max-w-xs text-sm text-muted-foreground">
-            [BRAND TAGLINE] Book verified shortlet apartments across Nigeria with clear pricing and
-            real availability. Replace this placeholder text.
+            Comfort • Class • Convenience — book verified shortlet apartments across Nigeria with
+            clear pricing and real availability.
           </p>
         </div>
 
@@ -37,9 +41,25 @@ export function SiteFooter() {
         <div>
           <h3 className="text-sm font-bold uppercase tracking-wide text-ink/70">Support</h3>
           <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
-            <li>[Support hours placeholder]</li>
-            <li>[Support email placeholder]</li>
-            <li>[Support phone placeholder]</li>
+            <li>We usually respond within a few minutes — reach out any time.</li>
+            <li>
+              <a
+                href={`mailto:${EMAIL}`}
+                className="hover:text-ink"
+              >
+                Email support
+              </a>
+            </li>
+            <li>
+              <a
+                href={whatsappLink}
+                target="_blank"
+                rel="noreferrer"
+                className="hover:text-ink"
+              >
+                Chat with us on WhatsApp
+              </a>
+            </li>
           </ul>
         </div>
 
@@ -47,10 +67,27 @@ export function SiteFooter() {
           <h3 className="text-sm font-bold uppercase tracking-wide text-ink/70">Contact</h3>
           <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
             <li className="flex items-center gap-2">
-              <Phone className="size-4" /> [Phone number]
+              <Phone className="size-4" />
+              <a href={`tel:${WHATSAPP}`} className="hover:text-ink">
+                +234 705 886 0184
+              </a>
             </li>
             <li className="flex items-center gap-2">
-              <Mail className="size-4" /> [Email address]
+              <MessageCircle className="size-4" />
+              <a
+                href={whatsappLink}
+                target="_blank"
+                rel="noreferrer"
+                className="hover:text-ink"
+              >
+                WhatsApp us
+              </a>
+            </li>
+            <li className="flex items-center gap-2">
+              <Mail className="size-4" />
+              <a href={`mailto:${EMAIL}`} className="hover:text-ink">
+                tradegateconcept@gmail.com
+              </a>
             </li>
           </ul>
         </div>
