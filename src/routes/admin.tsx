@@ -176,7 +176,7 @@ function Overview() {
   const q = useQuery({
     queryKey: ["admin-overview"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("bookings").select("status,total_amount,check_in");
+      const { data, error } = await supabase.from("bookings").select("reference,guest_name,status,total_amount,check_in,created_at,properties(name)").order("created_at", { ascending: false }).limit(100);
       if (error) throw error;
       return data;
     },
@@ -201,6 +201,30 @@ function Overview() {
           </div>
         ))}
       </div>
+      {(rows.length > 0) && (
+        <div className={card}>
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <h3 className="font-display text-xl font-bold text-ink">Recent bookings</h3>
+              <p className="mt-1 text-sm text-muted-foreground">The latest reservation activity across your properties.</p>
+            </div>
+          </div>
+          <div className="mt-4 divide-y divide-border">
+            {rows.slice(0, 5).map((b) => (
+              <div key={b.reference} className="flex flex-col gap-2 py-3 first:pt-0 last:pb-0 sm:flex-row sm:items-center sm:justify-between">
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold text-ink">{b.guest_name} · {b.properties?.name ?? "Property"}</p>
+                  <p className="mt-0.5 text-xs text-muted-foreground">{b.reference} · check-in {formatDate(b.check_in)}</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Badge variant="secondary" className="capitalize">{b.status.replace("_", " ")}</Badge>
+                  <span className="text-sm font-semibold text-ink">{formatNaira(Number(b.total_amount))}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
       <div className="grid gap-4 lg:grid-cols-[1.3fr_0.7fr]">
         <div className={card}>
           <h3 className="font-display text-xl font-bold text-ink">Operations snapshot</h3>
