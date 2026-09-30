@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
+import { BarChart3, BedDouble, CalendarDays, CreditCard, Home, ListChecks, Percent, Settings2, Star, Tags } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useStaff } from "@/hooks/use-staff";
@@ -46,29 +47,58 @@ function AdminPage() {
     );
   if (!isStaff) return <Shell><p className="text-muted-foreground">Your account doesn't have staff access.</p></Shell>;
 
+  const navItems = [
+    { value: "overview", label: "Overview", icon: BarChart3, group: "Workspace" },
+    { value: "bookings", label: "Bookings", icon: ListChecks, group: "Operations" },
+    { value: "properties", label: "Properties", icon: Home, group: "Operations" },
+    { value: "calendar", label: "Availability", icon: CalendarDays, group: "Operations" },
+    { value: "pricing", label: "Pricing", icon: Percent, group: "Revenue" },
+    { value: "payments", label: "Payments", icon: CreditCard, group: "Revenue" },
+    { value: "discounts", label: "Discounts", icon: Tags, group: "Revenue" },
+    { value: "amenities", label: "Amenities", icon: Settings2, group: "Content" },
+    { value: "reviews", label: "Reviews", icon: Star, group: "Content" },
+  ] as const;
+
   return (
     <Shell>
-      <Tabs defaultValue="overview">
-        <TabsList className="h-auto w-full justify-start gap-1 overflow-x-auto rounded-2xl border border-border bg-card p-2 shadow-sm">
-          <TabsTrigger value="overview" className="rounded-xl">Overview</TabsTrigger>
-          <TabsTrigger value="bookings" className="rounded-xl">Bookings</TabsTrigger>
-          <TabsTrigger value="properties" className="rounded-xl">Properties</TabsTrigger>
-          <TabsTrigger value="pricing" className="rounded-xl">Pricing</TabsTrigger>
-          <TabsTrigger value="amenities" className="rounded-xl">Amenities</TabsTrigger>
-          <TabsTrigger value="calendar" className="rounded-xl">Blocked dates</TabsTrigger>
-          <TabsTrigger value="payments" className="rounded-xl">Payments</TabsTrigger>
-          <TabsTrigger value="reviews" className="rounded-xl">Reviews</TabsTrigger>
-          <TabsTrigger value="discounts" className="rounded-xl">Discounts</TabsTrigger>
-        </TabsList>
-        <TabsContent value="overview"><Overview /></TabsContent>
-        <TabsContent value="bookings"><Bookings /></TabsContent>
-        <TabsContent value="properties"><Properties /></TabsContent>
-        <TabsContent value="pricing"><PricingRules /></TabsContent>
-        <TabsContent value="amenities"><PropertyAmenities /></TabsContent>
-        <TabsContent value="calendar"><Blocked /></TabsContent>
-        <TabsContent value="payments"><Payments /></TabsContent>
-        <TabsContent value="reviews"><Reviews /></TabsContent>
-        <TabsContent value="discounts"><Discounts /></TabsContent>
+      <Tabs defaultValue="overview" className="grid gap-5 lg:grid-cols-[240px_minmax(0,1fr)] lg:items-start">
+        <aside className="lg:sticky lg:top-24">
+          <TabsList className="flex h-auto w-full gap-1 overflow-x-auto rounded-2xl border border-border bg-card p-2 shadow-sm lg:flex-col lg:items-stretch lg:overflow-visible lg:rounded-3xl lg:p-3">
+            {navItems.map((item, index) => {
+              const Icon = item.icon;
+              const previous = navItems[index - 1];
+              const showGroup = index === 0 || previous.group !== item.group;
+              return (
+                <div key={item.value} className="contents lg:block">
+                  {showGroup && (
+                    <p className="hidden px-3 pb-1 pt-3 text-[10px] font-bold uppercase tracking-[0.16em] text-muted-foreground first:pt-1 lg:block">
+                      {item.group}
+                    </p>
+                  )}
+                  <TabsTrigger
+                    value={item.value}
+                    className="shrink-0 justify-start gap-2 rounded-xl px-3 py-2.5 data-[state=active]:bg-ink data-[state=active]:text-white lg:w-full"
+                  >
+                    <Icon className="size-4" />
+                    {item.label}
+                  </TabsTrigger>
+                </div>
+              );
+            })}
+          </TabsList>
+        </aside>
+
+        <div className="min-w-0">
+          <TabsContent value="overview" className="mt-0"><Overview /></TabsContent>
+          <TabsContent value="bookings" className="mt-0"><Bookings /></TabsContent>
+          <TabsContent value="properties" className="mt-0"><Properties /></TabsContent>
+          <TabsContent value="pricing" className="mt-0"><PricingRules /></TabsContent>
+          <TabsContent value="amenities" className="mt-0"><PropertyAmenities /></TabsContent>
+          <TabsContent value="calendar" className="mt-0"><Blocked /></TabsContent>
+          <TabsContent value="payments" className="mt-0"><Payments /></TabsContent>
+          <TabsContent value="reviews" className="mt-0"><Reviews /></TabsContent>
+          <TabsContent value="discounts" className="mt-0"><Discounts /></TabsContent>
+        </div>
       </Tabs>
     </Shell>
   );
@@ -77,11 +107,11 @@ function AdminPage() {
 function Shell({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-[calc(100vh-5rem)] bg-cream/40">
-      <div className="mx-auto max-w-7xl px-4 py-8 lg:px-6">
+      <div className="mx-auto max-w-7xl px-4 py-6 sm:py-8 lg:px-6">
         <div className="mb-7 flex flex-wrap items-end justify-between gap-4">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-brand">TradeGate operations</p>
-            <h1 className="mt-1 font-display text-4xl font-bold tracking-tight text-ink">Admin dashboard</h1>
+            <h1 className="mt-1 font-display text-3xl font-bold tracking-tight text-ink sm:text-4xl">Admin dashboard</h1>
             <p className="mt-2 text-sm text-muted-foreground">Manage listings, bookings, pricing, reviews and availability from one place.</p>
           </div>
           <Button asChild variant="outline" className="rounded-full bg-card">
