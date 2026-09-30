@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useSuspenseQuery, queryOptions } from "@tanstack/react-query";
 import { z } from "zod";
 import { Search } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { SearchBar } from "@/components/search-bar";
 import { PropertyCard } from "@/components/property-card";
 import { Button } from "@/components/ui/button";
@@ -141,7 +141,9 @@ function PropertiesPage() {
       </div>
 
       {/* Filter row */}
-      <div className="mt-3 flex flex-nowrap items-center gap-2 sm:mt-4 sm:flex-wrap sm:gap-3">
+      <div
+        className={`${filtersOpen ? "flex" : "hidden"} mt-3 flex-nowrap items-center gap-2 sm:mt-4 sm:flex sm:flex-wrap sm:gap-3`}
+      >
         <div className="flex min-w-0 flex-1 items-center gap-1 rounded-lg border border-input bg-card px-2 py-1 sm:flex-none sm:gap-2 sm:rounded-none sm:border-0 sm:bg-transparent sm:p-0">
           <Input
             type="number"
