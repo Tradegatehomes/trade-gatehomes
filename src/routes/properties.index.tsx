@@ -134,7 +134,7 @@ function PropertiesPage() {
       </button>
 
       <div
-        className={`${filtersOpen ? "block" : "hidden"} mt-4 w-full max-w-full overflow-hidden rounded-2xl bg-card p-3 shadow-card sm:mt-6 sm:block sm:rounded-3xl sm:p-4`}
+        className={`${filtersOpen ? "block" : "hidden"} mt-4 w-full max-w-full overflow-hidden sm:mt-6 sm:block`}
       >
         <SearchBar
           initial={{
@@ -146,51 +146,60 @@ function PropertiesPage() {
         />
       </div>
 
-      {/* Filter row */}
+      {/* Secondary filters */}
       <div
-        className={`${filtersOpen ? "grid" : "hidden"} mt-3 w-full max-w-full gap-2 overflow-hidden sm:mt-4 sm:flex sm:flex-wrap sm:items-center sm:gap-3`}
+        className={`${filtersOpen ? "block" : "hidden"} mt-3 w-full max-w-full sm:mt-4 sm:block`}
       >
-        <div className="grid w-full min-w-0 grid-cols-2 gap-2 rounded-2xl border border-input bg-card p-2 sm:flex sm:w-auto sm:flex-none sm:items-center sm:gap-2 sm:rounded-none sm:border-0 sm:bg-transparent sm:p-0">
-          <Input
-            type="number"
-            placeholder="Min ₦"
-            className="h-11 min-w-0 w-full rounded-xl bg-background px-3 text-sm sm:h-10 sm:w-28 sm:flex-none sm:rounded-md"
-            value={minPrice}
-            onChange={(e) => setMinPrice(e.target.value)}
-          />
-          
-          <Input
-            type="number"
-            placeholder="Max ₦"
-            className="h-7 min-w-0 flex-1 border-0 bg-transparent px-1 text-xs shadow-none focus-visible:ring-0 sm:h-10 sm:w-28 sm:flex-none sm:rounded-md sm:border sm:bg-card sm:px-3 sm:text-sm"
-            value={maxPrice}
-            onChange={(e) => setMaxPrice(e.target.value)}
-          />
-          <Button
-            variant="outline"
-            size="sm"
-            className="col-span-2 h-11 w-full rounded-xl px-4 text-sm font-semibold sm:col-auto sm:h-10 sm:w-auto sm:rounded-full sm:font-normal"
-            onClick={applyPrice}
-          >
-            <Search className="size-4 sm:mr-1" />
-            <span>Apply price</span>
-          </Button>
-        </div>
-        <div className="flex w-full items-center gap-2 sm:ml-auto sm:w-auto sm:shrink-0">
-          <span className="hidden text-sm font-medium text-ink/70 sm:inline">Sort</span>
-          <Select
-            value={search.sort ?? "featured"}
-            onValueChange={(v) => setSearch({ sort: v === "featured" ? undefined : v })}
-          >
-            <SelectTrigger className="h-10 w-full rounded-xl text-sm sm:w-44 sm:rounded-full">
-              <SelectValue placeholder="Sort" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="featured">Featured first</SelectItem>
-              <SelectItem value="price_asc">Price: low to high</SelectItem>
-              <SelectItem value="price_desc">Price: high to low</SelectItem>
-            </SelectContent>
-          </Select>
+        <div className="w-full max-w-full overflow-hidden rounded-2xl border border-border/80 bg-card p-3 shadow-sm sm:flex sm:flex-wrap sm:items-end sm:gap-3 sm:rounded-3xl sm:p-4">
+          <div className="grid min-w-0 gap-3 min-[390px]:grid-cols-2 sm:flex sm:items-end">
+            <label className="block min-w-0 sm:w-32">
+              <span className="mb-1.5 block text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground">Min price</span>
+              <Input
+                type="number"
+                inputMode="numeric"
+                placeholder="₦0"
+                className="h-11 w-full min-w-0 rounded-xl bg-background text-base sm:h-10 sm:rounded-full sm:text-sm"
+                value={minPrice}
+                onChange={(e) => setMinPrice(e.target.value)}
+              />
+            </label>
+            <label className="block min-w-0 sm:w-32">
+              <span className="mb-1.5 block text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground">Max price</span>
+              <Input
+                type="number"
+                inputMode="numeric"
+                placeholder="No max"
+                className="h-11 w-full min-w-0 rounded-xl bg-background text-base sm:h-10 sm:rounded-full sm:text-sm"
+                value={maxPrice}
+                onChange={(e) => setMaxPrice(e.target.value)}
+              />
+            </label>
+            <Button
+              variant="outline"
+              className="h-11 w-full rounded-xl font-semibold min-[390px]:col-span-2 sm:h-10 sm:w-auto sm:rounded-full sm:font-normal"
+              onClick={applyPrice}
+            >
+              <Search className="size-4" />
+              Apply price
+            </Button>
+          </div>
+
+          <div className="mt-3 min-w-0 sm:ml-auto sm:mt-0 sm:w-48">
+            <span className="mb-1.5 block text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground">Sort by</span>
+            <Select
+              value={search.sort ?? "featured"}
+              onValueChange={(v) => setSearch({ sort: v === "featured" ? undefined : v })}
+            >
+              <SelectTrigger className="h-11 w-full rounded-xl text-base sm:h-10 sm:rounded-full sm:text-sm">
+                <SelectValue placeholder="Sort" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="featured">Featured first</SelectItem>
+                <SelectItem value="price_asc">Price: low to high</SelectItem>
+                <SelectItem value="price_desc">Price: high to low</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
       </div>
 
