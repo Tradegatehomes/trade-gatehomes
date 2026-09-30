@@ -551,13 +551,13 @@ function PropertyPhotos({ propertyId, photos }: { propertyId: string; photos: { 
           <input type="file" accept="image/*" className="hidden" disabled={uploading} onChange={(e) => uploadPhoto(e.target.files?.[0])} />
         </label>
       </div>
-      <div className="flex flex-wrap gap-2"><Input className="min-w-56 flex-1" aria-label="Photo URL" placeholder="Or paste a photo URL" value={url} onChange={(e) => setUrl(e.target.value)} /><Button variant="outline" onClick={addPhoto}>Add URL</Button></div>
+      <div className="grid gap-2 sm:grid-cols-[1fr_auto]"><Input className="w-full" aria-label="Photo URL" placeholder="Or paste a photo URL" value={url} onChange={(e) => setUrl(e.target.value)} /><Button className="w-full sm:w-auto" variant="outline" onClick={addPhoto}>Add URL</Button></div>
       <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
         {photos.map((photo) => <div key={photo.id} className="overflow-hidden rounded-2xl border border-border bg-background">
           <img src={photo.url} alt={photo.alt_text ?? "Property photo"} className="aspect-[4/3] w-full object-cover" />
-          <div className="flex items-center justify-between gap-2 p-3">
+          <div className="grid gap-2 p-3 sm:flex sm:items-center sm:justify-between">
             <Badge variant={photo.is_primary ? "default" : "secondary"}>{photo.is_primary ? "Cover photo" : "Gallery photo"}</Badge>
-            <div className="flex shrink-0 gap-1">{!photo.is_primary && <Button size="sm" variant="outline" onClick={() => setPrimary(photo.id)}>Make cover</Button>}<Button size="sm" variant="ghost" onClick={() => removePhoto(photo.id)} aria-label="Remove photo">Remove</Button></div>
+            <div className="grid grid-cols-2 gap-1 sm:flex sm:shrink-0">{!photo.is_primary && <Button size="sm" variant="outline" onClick={() => setPrimary(photo.id)}>Make cover</Button>}<Button size="sm" variant="ghost" onClick={() => removePhoto(photo.id)} aria-label="Remove photo">Remove</Button></div>
           </div>
         </div>)}
       </div>
@@ -615,17 +615,17 @@ function PropertyRow({
               <p className="mt-1 font-display text-xl font-bold text-ink">{formatNaira(Number(p.base_price))}</p>
             </div>
           </div>
-          <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-border pt-4">
-            <Button size="sm" onClick={onEdit}>{editing ? "Close editor" : "Manage listing"}</Button>
-            <div className="flex items-center gap-2">
-              <Input className="w-32" type="number" min={0} value={price} onChange={(e) => setPrice(e.target.value)} aria-label={`Nightly price for ${p.name}`} />
+          <div className="mt-5 grid gap-2 border-t border-border pt-4 sm:flex sm:flex-wrap sm:items-center">
+            <Button size="sm" className="w-full sm:w-auto" onClick={onEdit}>{editing ? "Close editor" : "Manage listing"}</Button>
+            <div className="grid grid-cols-[1fr_auto] gap-2 sm:flex sm:items-center">
+              <Input className="w-full sm:w-32" type="number" min={0} value={price} onChange={(e) => setPrice(e.target.value)} aria-label={`Nightly price for ${p.name}`} />
               <Button size="sm" variant="outline" onClick={() => onSave({ base_price: Number(price) })}>Update rate</Button>
             </div>
-            <Button size="sm" variant={p.featured ? "default" : "outline"} onClick={() => onSave({ featured: !p.featured })}>
+            <Button size="sm" className="w-full sm:w-auto" variant={p.featured ? "default" : "outline"} onClick={() => onSave({ featured: !p.featured })}>
               {p.featured ? "Featured" : "Feature listing"}
             </Button>
             <Select value={p.status} onValueChange={(v) => onSave({ status: v as PropertyStatus })}>
-              <SelectTrigger className="w-36 capitalize"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="w-full capitalize sm:w-36"><SelectValue /></SelectTrigger>
               <SelectContent>
                 {PROPERTY_STATUSES.map((s) => <SelectItem key={s} value={s} className="capitalize">{s}</SelectItem>)}
               </SelectContent>
@@ -669,18 +669,18 @@ function Blocked() {
   return (
     <div className="mt-6">
       <SectionIntro eyebrow="Availability" title="Blocked dates" description="Keep unavailable dates out of the booking flow for maintenance, owner use or manual holds." />
-      <div className={`${card} mb-4 flex flex-wrap items-end gap-2`}>
+      <div className={`${card} mb-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-5`}>
         <Select value={propertyId} onValueChange={setPropertyId}>
-          <SelectTrigger className="w-56"><SelectValue placeholder="Property" /></SelectTrigger>
+          <SelectTrigger className="w-full"><SelectValue placeholder="Property" /></SelectTrigger>
           <SelectContent>{(props.data ?? []).map((p) => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}</SelectContent>
         </Select>
-        <Input type="date" className="w-40" value={start} onChange={(e) => setStart(e.target.value)} aria-label="From" />
-        <Input type="date" className="w-40" value={end} onChange={(e) => setEnd(e.target.value)} aria-label="Until" />
-        <Input className="w-48" placeholder="Note (optional)" value={note} onChange={(e) => setNote(e.target.value)} />
-        <Button onClick={add}>Block dates</Button>
+        <Input type="date" className="w-full" value={start} onChange={(e) => setStart(e.target.value)} aria-label="From" />
+        <Input type="date" className="w-full" value={end} onChange={(e) => setEnd(e.target.value)} aria-label="Until" />
+        <Input className="w-full" placeholder="Note (optional)" value={note} onChange={(e) => setNote(e.target.value)} />
+        <Button className="w-full sm:w-auto" onClick={add}>Block dates</Button>
       </div>
       <div className="space-y-3">{(q.data ?? []).map((b) => (
-        <div key={b.id} className={`${card} flex items-center justify-between`}>
+        <div key={b.id} className={`${card} flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center`}>
           <p className="text-sm"><span className="font-semibold text-ink">{b.properties?.name}</span> · {formatDate(b.start_date)} → {formatDate(b.end_date)}{b.note ? ` · ${b.note}` : ""}</p>
           <Button size="sm" variant="ghost" onClick={() => remove(b.id)}>Remove</Button>
         </div>
