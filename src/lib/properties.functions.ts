@@ -22,6 +22,7 @@ export interface PropertyCardDto {
   base_price: number;
   featured: boolean;
   image: string | null;
+  images: string[];
 }
 
 export interface PropertyDetailDto extends PropertyCardDto {
@@ -108,6 +109,7 @@ export const listProperties = createServerFn({ method: "GET" })
         base_price: num(r.base_price),
         featured: r.featured,
         image: sorted[0]?.url ?? null,
+        images: sorted.map((img) => img.url),
       };
     });
   });
