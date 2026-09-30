@@ -18,10 +18,10 @@ export function SiteHeader() {
       <div className="mx-auto flex h-20 max-w-6xl items-center justify-between gap-4 px-4">
         <Link to="/" aria-label="TradeGate Continental Homes home" className="flex shrink-0 items-center gap-3">
           <img
-            src="/tradegate-icon.png"
+            src="/tradegate-icon.png?v=4"
             alt=""
             aria-hidden="true"
-            className="h-12 w-16 object-contain"
+            className="h-14 w-20 shrink-0 object-contain object-center"
           />
           <div className="hidden leading-tight sm:block">
             <p className="font-display text-lg font-bold tracking-wide text-ink">TRADEGATE</p>
@@ -57,7 +57,7 @@ export function SiteHeader() {
           <SheetContent side="right" className="w-72">
             <SheetTitle>
               <div className="flex items-center gap-3">
-                <img src="/tradegate-icon.png" alt="" aria-hidden="true" className="h-14 w-20 object-contain" />
+                <img src="/tradegate-icon.png?v=4" alt="" aria-hidden="true" className="h-16 w-24 shrink-0 object-contain object-center" />
                 <div className="text-left leading-tight">
                   <p className="font-display text-lg font-bold tracking-wide text-ink">TRADEGATE</p>
                   <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-brand">Continental Homes</p>
