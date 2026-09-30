@@ -114,27 +114,8 @@ function PropertyDetailPage() {
         </div>
       </div>
 
-      {/* Gallery */}
-      {p.images.length > 0 && (
-        <div className="mt-6 grid gap-3 sm:grid-cols-4 sm:grid-rows-2">
-          {p.images.slice(0, 1).map((img) => (
-            <img
-              key={img.url}
-              src={img.url}
-              alt={img.alt_text ?? p.name}
-              className="aspect-[4/3] w-full rounded-3xl object-cover shadow-card sm:col-span-2 sm:row-span-2"
-            />
-          ))}
-          {p.images.slice(1, 5).map((img) => (
-            <img
-              key={img.url}
-              src={img.url}
-              alt={img.alt_text ?? p.name}
-              className="aspect-[4/3] w-full rounded-3xl object-cover shadow-card"
-            />
-          ))}
-        </div>
-      )}
+      {/* Gallery: swipeable on mobile, editorial grid on larger screens */}
+      {p.images.length > 0 && <PropertyGallery images={p.images} name={p.name} />}
 
       <div className="mt-10 grid gap-10 lg:grid-cols-[1fr_400px]">
         {/* Left: details */}
@@ -296,6 +277,68 @@ function PropertyDetailPage() {
           </div>
         </SheetContent>
       </Sheet>
+    </div>
+  );
+}
+
+
+function PropertyGallery({ images, name }: { images: { url: string; alt_text: string | null }[]; name: string }) {
+  const [active, setActive] = useState(0);
+  return (
+    <div className="mt-6">
+      <div className="relative -mx-4 sm:hidden">
+        <div
+          className="flex snap-x snap-mandatory gap-2 overflow-x-auto px-4 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          onScroll={(e) => {
+            const el = e.currentTarget;
+            const itemWidth = el.firstElementChild?.getBoundingClientRect().width ?? el.clientWidth;
+            const gap = 8;
+            setActive(Math.max(0, Math.min(images.length - 1, Math.round(el.scrollLeft / (itemWidth + gap)))));
+          }}
+          aria-label="Property photos"
+        >
+          {images.map((img, index) => (
+            <figure key={img.url} className="w-[88vw] shrink-0 snap-center first:snap-start">
+              <img
+                src={img.url}
+                alt={img.alt_text ?? `${name} photo ${index + 1}`}
+                className="aspect-[4/3] w-full rounded-[1.75rem] object-cover shadow-card"
+                loading={index === 0 ? "eager" : "lazy"}
+              />
+            </figure>
+          ))}
+        </div>
+        <div className="pointer-events-none absolute bottom-5 right-7 rounded-full bg-ink/80 px-3 py-1 text-xs font-semibold text-white">
+          {active + 1} / {images.length}
+        </div>
+        {images.length > 1 && (
+          <div className="mt-1 flex justify-center gap-1.5" aria-hidden="true">
+            {images.map((_, index) => (
+              <span key={index} className={`h-1.5 rounded-full transition-all ${index === active ? "w-5 bg-brand" : "w-1.5 bg-border"}`} />
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="hidden gap-3 sm:grid sm:grid-cols-4 sm:grid-rows-2">
+        {images.slice(0, 1).map((img) => (
+          <img
+            key={img.url}
+            src={img.url}
+            alt={img.alt_text ?? name}
+            className="aspect-[4/3] w-full rounded-3xl object-cover shadow-card sm:col-span-2 sm:row-span-2"
+          />
+        ))}
+        {images.slice(1, 5).map((img) => (
+          <img
+            key={img.url}
+            src={img.url}
+            alt={img.alt_text ?? name}
+            className="aspect-[4/3] w-full rounded-3xl object-cover shadow-card"
+            loading="lazy"
+          />
+        ))}
+      </div>
     </div>
   );
 }
