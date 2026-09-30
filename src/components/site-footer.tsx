@@ -1,6 +1,5 @@
 import { Link } from "@tanstack/react-router";
 import { Mail, MessageCircle, Phone } from "lucide-react";
-import logoAsset from "@/assets/tradegate-continental-homes-logo.png.asset.json";
 
 const WHATSAPP = "+2347058860184";
 const EMAIL = "tradegateconcept@gmail.com";
@@ -12,9 +11,9 @@ export function SiteFooter() {
       <div className="mx-auto grid max-w-6xl gap-10 px-4 py-12 sm:grid-cols-2 lg:grid-cols-4">
         <div>
           <img
-            src={logoAsset.url}
+            src="/tradegate-logo.svg"
             alt="TradeGate Continental Homes"
-            className="h-32 w-auto object-contain object-left mix-blend-multiply"
+            className="h-32 w-auto object-contain object-left"
           />
           <p className="mt-3 max-w-xs text-sm text-muted-foreground">
             Comfort • Class • Convenience — book verified shortlet apartments across Nigeria with
