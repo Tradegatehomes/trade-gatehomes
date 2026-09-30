@@ -134,7 +134,7 @@ function PropertiesPage() {
       </button>
 
       <div
-        className={`${filtersOpen ? "block" : "hidden"} mt-4 rounded-2xl bg-card p-3 shadow-card sm:mt-6 sm:block sm:rounded-3xl sm:p-4`}
+        className={`${filtersOpen ? "block" : "hidden"} mt-4 w-full max-w-full overflow-hidden rounded-2xl bg-card p-3 shadow-card sm:mt-6 sm:block sm:rounded-3xl sm:p-4`}
       >
         <SearchBar
           initial={{
@@ -148,17 +148,17 @@ function PropertiesPage() {
 
       {/* Filter row */}
       <div
-        className={`${filtersOpen ? "grid" : "hidden"} mt-3 gap-2 sm:mt-4 sm:flex sm:flex-wrap sm:items-center sm:gap-3`}
+        className={`${filtersOpen ? "grid" : "hidden"} mt-3 w-full max-w-full gap-2 overflow-hidden sm:mt-4 sm:flex sm:flex-wrap sm:items-center sm:gap-3`}
       >
-        <div className="grid grid-cols-[1fr_auto_1fr_auto] items-center gap-1 rounded-xl border border-input bg-card px-2 py-1 sm:flex sm:flex-none sm:gap-2 sm:rounded-none sm:border-0 sm:bg-transparent sm:p-0">
+        <div className="grid w-full min-w-0 grid-cols-2 gap-2 rounded-2xl border border-input bg-card p-2 sm:flex sm:w-auto sm:flex-none sm:items-center sm:gap-2 sm:rounded-none sm:border-0 sm:bg-transparent sm:p-0">
           <Input
             type="number"
             placeholder="Min ₦"
-            className="h-7 min-w-0 flex-1 border-0 bg-transparent px-1 text-xs shadow-none focus-visible:ring-0 sm:h-10 sm:w-28 sm:flex-none sm:rounded-md sm:border sm:bg-card sm:px-3 sm:text-sm"
+            className="h-11 min-w-0 w-full rounded-xl bg-background px-3 text-sm sm:h-10 sm:w-28 sm:flex-none sm:rounded-md"
             value={minPrice}
             onChange={(e) => setMinPrice(e.target.value)}
           />
-          <span className="text-xs text-muted-foreground sm:text-sm">–</span>
+          
           <Input
             type="number"
             placeholder="Max ₦"
@@ -169,11 +169,11 @@ function PropertiesPage() {
           <Button
             variant="outline"
             size="sm"
-            className="h-7 shrink-0 rounded-md px-2 text-[11px] font-bold uppercase sm:h-10 sm:rounded-full sm:px-4 sm:text-sm sm:font-normal sm:normal-case"
+            className="col-span-2 h-11 w-full rounded-xl px-4 text-sm font-semibold sm:col-auto sm:h-10 sm:w-auto sm:rounded-full sm:font-normal"
             onClick={applyPrice}
           >
-            <Search className="size-3 sm:mr-1 sm:size-4" />
-            <span className="hidden sm:inline">Apply</span>
+            <Search className="size-4 sm:mr-1" />
+            <span>Apply price</span>
           </Button>
         </div>
         <div className="flex w-full items-center gap-2 sm:ml-auto sm:w-auto sm:shrink-0">
@@ -212,7 +212,7 @@ function PropertiesPage() {
                           : { maxPrice: undefined },
                 )
               }
-              className="rounded-full bg-brand/10 px-3 py-1 text-xs font-semibold text-brand transition-colors hover:bg-brand/20"
+              className="max-w-full break-words rounded-full bg-brand/10 px-3 py-1 text-left text-xs font-semibold text-brand transition-colors hover:bg-brand/20"
             >
               {f.label}: {f.value} ✕
             </button>
