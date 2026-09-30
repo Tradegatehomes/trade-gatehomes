@@ -21,7 +21,7 @@ export function SiteHeader() {
             src="/tradegate-logo-tight.png?v=2"
             alt=""
             aria-hidden="true"
-            className="h-12 w-14 shrink-0 object-contain object-center sm:h-14 sm:w-16"
+            className="h-12 w-14 shrink-0 object-contain object-center mix-blend-multiply sm:h-14 sm:w-16"
           />
           <div className="leading-[1.05]">
             <p className="font-display text-base font-bold tracking-[0.04em] text-ink sm:text-lg">TRADEGATE</p>
@@ -57,7 +57,7 @@ export function SiteHeader() {
           <SheetContent side="right" className="w-[88vw] max-w-sm">
             <SheetTitle>
               <div className="flex items-center gap-3">
-                <img src="/tradegate-logo-tight.png?v=2" alt="" aria-hidden="true" className="h-14 w-16 shrink-0 object-contain object-center" />
+                <img src="/tradegate-logo-tight.png?v=2" alt="" aria-hidden="true" className="h-14 w-16 shrink-0 object-contain object-center mix-blend-multiply" />
                 <div className="text-left leading-tight">
                   <p className="font-display text-lg font-bold tracking-wide text-ink">TRADEGATE</p>
                   <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-brand">Continental Homes</p>
