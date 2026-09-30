@@ -181,6 +181,7 @@ export function SearchBar({ initial, variant = "compact" }: SearchBarProps) {
           <p className="px-1 text-xs font-semibold text-destructive">{error}</p>
         ) : null}
       </div>
-    </form>
+      </form>
+    </>
   );
 }
