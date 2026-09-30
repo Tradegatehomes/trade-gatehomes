@@ -54,7 +54,7 @@ export function SiteHeader() {
               <Menu className="size-5" />
             </Button>
           </SheetTrigger>
-          <SheetContent side="right" className="w-72">
+          <SheetContent side="right" className="w-[88vw] max-w-sm">
             <SheetTitle>
               <div className="flex items-center gap-3">
                 <img src="/tradegate-icon.png?v=4" alt="" aria-hidden="true" className="h-16 w-24 shrink-0 object-contain object-center" />
