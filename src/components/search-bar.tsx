@@ -1,5 +1,5 @@
 import { useNavigate } from "@tanstack/react-router";
-import { CalendarDays, MapPin, Search, Users } from "lucide-react";
+import { CalendarDays, ChevronDown, MapPin, Search, SlidersHorizontal, Users } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,6 +25,7 @@ export function SearchBar({ initial, variant = "compact" }: SearchBarProps) {
   const [checkOut, setCheckOut] = useState(initial?.checkOut ?? "");
   const [guests, setGuests] = useState(initial?.guests ?? 2);
   const [error, setError] = useState<string | null>(null);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -54,10 +55,10 @@ export function SearchBar({ initial, variant = "compact" }: SearchBarProps) {
   const mobileLabel =
     "pointer-events-none absolute left-11 top-2 text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground";
 
-  const mobileForm = (
+  const mobileFields = (
     <form
       onSubmit={submit}
-      className={`rounded-[1.75rem] border border-border/80 bg-card p-3 shadow-card md:hidden ${variant === "hero" ? "space-y-2.5" : "space-y-2"}`}
+      className={`w-full max-w-full overflow-hidden rounded-[1.75rem] border border-border/80 bg-card p-3 shadow-card md:hidden ${variant === "hero" ? "space-y-2.5" : "space-y-2"}`}
     >
       <label className="relative block">
         <MapPin className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-brand" />
@@ -135,9 +136,42 @@ export function SearchBar({ initial, variant = "compact" }: SearchBarProps) {
     </form>
   );
 
+  const mobileSummary = [
+    city || "Anywhere",
+    checkIn && checkOut ? `${checkIn} → ${checkOut}` : "Any dates",
+    `${guests} ${guests === 1 ? "guest" : "guests"}`,
+  ].join(" · ");
+
   return (
     <>
-      {mobileForm}
+      {variant === "hero" ? (
+        <div className="w-full max-w-full md:hidden">
+          <button
+            type="button"
+            onClick={() => setMobileOpen((open) => !open)}
+            className="flex w-full max-w-full items-center gap-3 rounded-2xl border border-border/80 bg-card px-4 py-3.5 text-left shadow-card"
+            aria-expanded={mobileOpen}
+            aria-controls="home-mobile-search"
+          >
+            <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-brand text-brand-foreground">
+              <SlidersHorizontal className="size-4" />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-[11px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
+                Find a stay
+              </span>
+              <span className="block truncate text-sm font-semibold text-ink">{mobileSummary}</span>
+            </span>
+            <span className="flex shrink-0 items-center gap-1 text-xs font-semibold text-brand">
+              {mobileOpen ? "Hide" : "Filters"}
+              <ChevronDown className={`size-4 transition-transform ${mobileOpen ? "rotate-180" : ""}`} />
+            </span>
+          </button>
+          {mobileOpen ? <div id="home-mobile-search" className="mt-2 w-full max-w-full">{mobileFields}</div> : null}
+        </div>
+      ) : (
+        mobileFields
+      )}
       <form
         onSubmit={submit}
         className="hidden gap-3 rounded-3xl bg-card/90 p-4 shadow-float backdrop-blur md:grid md:grid-cols-[1.2fr_1fr_1fr_0.8fr_auto] md:items-center md:rounded-[2rem]"
