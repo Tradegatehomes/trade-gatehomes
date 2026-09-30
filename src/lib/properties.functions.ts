@@ -192,120 +192,83 @@ export const quoteBooking = createServerFn({ method: "POST" })
 export const createBooking = createServerFn({ method: "POST" })
   .inputValidator(bookingSchema.parse)
   .handler(async ({ data }) => {
-    // Server-side re-pricing + availability check; browser prices are never trusted.
-    let built: Awaited<ReturnType<typeof buildQuote>>;
+    // Re-price and validate availability server-side before creating the reservation.
     try {
-      built = await buildQuote(data);
+      await buildQuote(data);
     } catch (err) {
-      return { ok: false as const, reference: null, error: err instanceof Error ? err.message : "Those dates are not available." };
+      return {
+        ok: false as const,
+        reference: null,
+        error: err instanceof Error ? err.message : "Those dates are not available.",
+      };
     }
-    const { quote, propertyId } = built;
 
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    // Link to the signed-in guest when a valid session token accompanies the request.
-    let userId: string | null = null;
+    let accessToken: string | null = null;
     try {
       const { getRequestHeader } = await import("@tanstack/react-start/server");
       const auth = getRequestHeader("authorization");
-      const token = auth?.startsWith("Bearer ") ? auth.slice(7) : null;
-      if (token) {
-        const { data: u } = await supabaseAdmin.auth.getUser(token);
-        userId = u.user?.id ?? null;
-      }
+      accessToken = auth?.startsWith("Bearer ") ? auth.slice(7) : null;
     } catch {
-      userId = null;
-    }
-    const { data: booking, error } = await supabaseAdmin
-      .from("bookings")
-      .insert({
-        reference: "", // filled by the bookings_set_reference trigger
-        property_id: propertyId,
-        user_id: userId,
-        guest_name: data.guestName,
-        guest_email: data.guestEmail,
-        guest_phone: data.guestPhone,
-        check_in: data.checkIn,
-        check_out: data.checkOut,
-        guests: data.guests,
-        nights: quote.nights,
-        nightly_subtotal: quote.nightly_subtotal,
-        cleaning_fee: quote.cleaning_fee,
-        service_fee: quote.service_fee,
-        extra_guest_fee: quote.extra_guest_fee,
-        discount_amount: quote.discount_amount,
-        discount_code: quote.discount_code,
-        security_deposit: quote.security_deposit,
-        total_amount: quote.total_amount,
-        amount_due_now: quote.amount_due_now,
-        balance_amount: quote.balance_amount,
-        balance_due_date: quote.balance_due_date,
-        pay_deposit: quote.pay_deposit_available && (data.payDeposit ?? false),
-        status: "pending",
-        notes: data.notes ?? null,
-      })
-      .select("reference")
-      .single();
-
-    if (error) {
-      if (error.code === "23P01") {
-        return { ok: false as const, reference: null, error: "Those dates were just booked. Please choose different dates." };
-      }
-      return { ok: false as const, reference: null, error: "Could not complete the booking. Please try again." };
+      accessToken = null;
     }
 
-    // Count discount code usage so usage limits stay accurate.
-    if (quote.discount_code) {
-      await supabaseAdmin.rpc("increment_discount_usage", { code: quote.discount_code });
+    const client = pub(accessToken) as any;
+    const { data: reference, error } = await client.rpc("create_booking_request", {
+      p_slug: data.slug,
+      p_check_in: data.checkIn,
+      p_check_out: data.checkOut,
+      p_guests: data.guests,
+      p_discount_code: data.discountCode ?? null,
+      p_pay_deposit: data.payDeposit ?? false,
+      p_guest_name: data.guestName,
+      p_guest_email: data.guestEmail,
+      p_guest_phone: data.guestPhone,
+      p_notes: data.notes ?? null,
+    });
+
+    if (error || !reference) {
+      const message = error?.message ?? "Could not complete the reservation. Please try again.";
+      return { ok: false as const, reference: null, error: message };
     }
 
-    return { ok: true as const, reference: booking.reference, error: null };
+    return { ok: true as const, reference: String(reference), error: null };
   });
 
 export const getBookingByReference = createServerFn({ method: "GET" })
   .inputValidator((d) => z.object({ reference: z.string() }).parse(d))
   .handler(async ({ data }) => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: booking, error } = await supabaseAdmin
-      .from("bookings")
-      .select(
-        `reference,status,guest_name,guest_email,check_in,check_out,guests,nights,
-         total_amount,amount_due_now,balance_amount,balance_due_date,pay_deposit,
-         discount_code,security_deposit,created_at,
-         properties(name,city,state,check_in_time,check_out_time,phone,whatsapp,property_images(url,alt_text,is_primary,sort_order))`,
-      )
-      .eq("reference", data.reference)
-      .maybeSingle();
+    const client = pub() as any;
+    const { data: booking, error } = await client.rpc("get_booking_confirmation", {
+      p_reference: data.reference,
+    });
     if (error || !booking) return null;
-    const b = booking as any;
-    const images = [...(b.properties?.property_images ?? [])].sort(
-      (x: any, y: any) => Number(y.is_primary) - Number(x.is_primary) || x.sort_order - y.sort_order,
-    );
-    return {
-      reference: b.reference,
-      status: b.status,
-      guestName: b.guest_name,
-      guestEmail: b.guest_email,
-      checkIn: b.check_in,
-      checkOut: b.check_out,
-      guests: b.guests,
-      nights: b.nights,
-      totalAmount: num(b.total_amount),
-      amountDueNow: num(b.amount_due_now),
-      balanceAmount: num(b.balance_amount),
-      balanceDueDate: b.balance_due_date,
-      payDeposit: b.pay_deposit,
-      discountCode: b.discount_code,
-      securityDeposit: num(b.security_deposit),
-      createdAt: b.created_at,
+    return booking as {
+      reference: string;
+      status: string;
+      guestName: string;
+      guestEmail: string;
+      checkIn: string;
+      checkOut: string;
+      guests: number;
+      nights: number;
+      totalAmount: number;
+      amountDueNow: number;
+      balanceAmount: number;
+      balanceDueDate: string | null;
+      payDeposit: boolean;
+      discountCode: string | null;
+      securityDeposit: number;
+      createdAt: string;
       property: {
-        name: b.properties?.name,
-        city: b.properties?.city,
-        state: b.properties?.state,
-        checkInTime: b.properties?.check_in_time,
-        checkOutTime: b.properties?.check_out_time,
-        phone: b.properties?.phone,
-        whatsapp: b.properties?.whatsapp,
-        image: images[0]?.url ?? null,
-      },
+        name: string;
+        city: string;
+        state: string | null;
+        checkInTime: string;
+        checkOutTime: string;
+        phone: string | null;
+        whatsapp: string | null;
+        image: string | null;
+      };
     };
   });
+
