@@ -10,7 +10,7 @@ export function SiteFooter() {
           <img
             src={logoAsset.url}
             alt="TradeGate Continental Homes"
-            className="h-32 w-auto object-contain object-left"
+            className="h-32 w-auto object-contain object-left mix-blend-multiply"
           />
           <p className="mt-3 max-w-xs text-sm text-muted-foreground">
             [BRAND TAGLINE] Book verified shortlet apartments across Nigeria with clear pricing and
