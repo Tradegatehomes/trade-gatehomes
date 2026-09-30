@@ -57,6 +57,12 @@ function PropertiesPage() {
   const [maxPrice, setMaxPrice] = useState(search.maxPrice?.toString() ?? "");
   const [filtersOpen, setFiltersOpen] = useState(false);
 
+  // Collapse the mobile search panel after a search is applied
+  useEffect(() => {
+    setFiltersOpen(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search.city, search.checkIn, search.checkOut, search.guests]);
+
   const listQuery = queryOptions({
     queryKey: ["properties", "list", search],
     queryFn: () =>
