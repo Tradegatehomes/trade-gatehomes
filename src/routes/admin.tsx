@@ -378,7 +378,6 @@ function PropertyEditor({ property, onCancel, onSave, saving }: {
       <div>
         <p className="mb-3 text-sm font-semibold text-ink">Guest-facing content</p>
         <FormField label="Description"><Textarea value={values.description} onChange={(e) => field("description", e.target.value)} rows={4} /></FormField>
-        </FormField>
       </div>
       <div className="grid gap-4 md:grid-cols-2">
         <FormField label="House rules"><Textarea value={values.house_rules} onChange={(e) => field("house_rules", e.target.value)} rows={3} /></FormField>
