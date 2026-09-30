@@ -55,6 +55,7 @@ function PropertiesPage() {
   const navigate = Route.useNavigate();
   const [minPrice, setMinPrice] = useState(search.minPrice?.toString() ?? "");
   const [maxPrice, setMaxPrice] = useState(search.maxPrice?.toString() ?? "");
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   const listQuery = queryOptions({
     queryKey: ["properties", "list", search],
