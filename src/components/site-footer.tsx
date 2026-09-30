@@ -11,7 +11,7 @@ export function SiteFooter() {
       <div className="mx-auto grid max-w-6xl gap-10 px-4 py-12 sm:grid-cols-2 lg:grid-cols-4">
         <div>
           <div className="flex items-center gap-3">
-            <img src="/tradegate-logo-tight.png?v=2" alt="" aria-hidden="true" className="h-20 w-28 shrink-0 object-contain object-left" />
+            <img src="/tradegate-logo-tight.png?v=2" alt="" aria-hidden="true" className="h-20 w-28 shrink-0 object-contain object-left mix-blend-multiply" />
             <div className="leading-tight">
               <p className="font-display text-xl font-bold tracking-wide text-ink">TRADEGATE</p>
               <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-brand">Continental Homes</p>
