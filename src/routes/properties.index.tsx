@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useSuspenseQuery, queryOptions } from "@tanstack/react-query";
 import { z } from "zod";
 import { Search } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { SearchBar } from "@/components/search-bar";
 import { PropertyCard } from "@/components/property-card";
 import { Button } from "@/components/ui/button";
@@ -55,6 +55,13 @@ function PropertiesPage() {
   const navigate = Route.useNavigate();
   const [minPrice, setMinPrice] = useState(search.minPrice?.toString() ?? "");
   const [maxPrice, setMaxPrice] = useState(search.maxPrice?.toString() ?? "");
+  const [filtersOpen, setFiltersOpen] = useState(false);
+
+  // Collapse the mobile search panel after a search is applied
+  useEffect(() => {
+    setFiltersOpen(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search.city, search.checkIn, search.checkOut, search.guests]);
 
   const listQuery = queryOptions({
     queryKey: ["properties", "list", search],
@@ -104,7 +111,31 @@ function PropertiesPage() {
         {search.city ? ` in ${search.city}` : " across Nigeria"}.
       </p>
 
-      <div className="mt-4 rounded-2xl bg-card p-3 shadow-card sm:mt-6 sm:rounded-3xl sm:p-4">
+      {/* Mobile: collapsed search pill */}
+      <button
+        type="button"
+        onClick={() => setFiltersOpen((o) => !o)}
+        className="mt-4 flex w-full items-center gap-3 rounded-full bg-card px-4 py-3 shadow-card sm:hidden"
+        aria-expanded={filtersOpen}
+      >
+        <span className="grid size-8 shrink-0 place-items-center rounded-full bg-brand text-brand-foreground">
+          <Search className="size-4" />
+        </span>
+        <span className="min-w-0 flex-1 truncate text-left text-sm font-medium text-ink">
+          {search.city || "Search stays"}
+          {search.checkIn && search.checkOut
+            ? ` · ${search.checkIn} → ${search.checkOut}`
+            : ""}
+          {search.guests ? ` · ${search.guests} guests` : ""}
+        </span>
+        <span className="shrink-0 text-xs font-semibold text-brand">
+          {filtersOpen ? "Hide" : "Filters"}
+        </span>
+      </button>
+
+      <div
+        className={`${filtersOpen ? "block" : "hidden"} mt-4 rounded-2xl bg-card p-3 shadow-card sm:mt-6 sm:block sm:rounded-3xl sm:p-4`}
+      >
         <SearchBar
           initial={{
             ...(search.city ? { city: search.city } : {}),
@@ -116,7 +147,9 @@ function PropertiesPage() {
       </div>
 
       {/* Filter row */}
-      <div className="mt-3 flex flex-nowrap items-center gap-2 sm:mt-4 sm:flex-wrap sm:gap-3">
+      <div
+        className={`${filtersOpen ? "flex" : "hidden"} mt-3 flex-nowrap items-center gap-2 sm:mt-4 sm:flex sm:flex-wrap sm:gap-3`}
+      >
         <div className="flex min-w-0 flex-1 items-center gap-1 rounded-lg border border-input bg-card px-2 py-1 sm:flex-none sm:gap-2 sm:rounded-none sm:border-0 sm:bg-transparent sm:p-0">
           <Input
             type="number"
