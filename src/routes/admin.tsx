@@ -353,6 +353,7 @@ function usePropertyPhotos(propertyId?: string) {
 function PropertyPhotos({ propertyId, photos }: { propertyId: string; photos: { id: string; url: string; alt_text: string | null; is_primary: boolean; sort_order: number }[] }) {
   const qc = useQueryClient();
   const [url, setUrl] = useState("");
+  const [uploading, setUploading] = useState(false);
   async function refresh() {
     await qc.invalidateQueries({ queryKey: ["admin-property-images", propertyId] });
     await qc.invalidateQueries({ queryKey: ["properties"] });
@@ -367,6 +368,36 @@ function PropertyPhotos({ propertyId, photos }: { propertyId: string; photos: { 
     toast.success("Photo added");
     await refresh();
   }
+  async function uploadPhoto(file?: File) {
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please choose an image file.");
+      return;
+    }
+    setUploading(true);
+    try {
+      const safe = file.name.toLowerCase().replace(/[^a-z0-9.]+/g, "-");
+      const path = `${propertyId}/${Date.now()}-${safe}`;
+      const { error: uploadError } = await supabase.storage.from("property-images").upload(path, file, { upsert: false });
+      if (uploadError) throw uploadError;
+      const { data } = supabase.storage.from("property-images").getPublicUrl(path);
+      const { error } = await supabase.from("property_images").insert({
+        property_id: propertyId,
+        url: data.publicUrl,
+        alt_text: file.name.replace(/\.[^.]+$/, "").replace(/[-_]+/g, " "),
+        is_primary: photos.length === 0,
+        sort_order: photos.length,
+      });
+      if (error) throw error;
+      toast.success("Photo uploaded");
+      await refresh();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Photo upload failed");
+    } finally {
+      setUploading(false);
+    }
+  }
+
   async function setPrimary(id: string) {
     const { error: clearError } = await supabase.from("property_images").update({ is_primary: false }).eq("property_id", propertyId);
     if (clearError) { toast.error(clearError.message); return; }
@@ -381,12 +412,24 @@ function PropertyPhotos({ propertyId, photos }: { propertyId: string; photos: { 
   }
   return (
     <section className="space-y-3 border-t border-border pt-4">
-      <h4 className="font-semibold text-ink">Listing photos</h4>
-      <div className="flex flex-wrap gap-2"><Input className="min-w-56 flex-1" aria-label="Photo URL" placeholder="Paste a photo URL" value={url} onChange={(e) => setUrl(e.target.value)} /><Button variant="outline" onClick={addPhoto}>Add photo</Button></div>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h4 className="font-semibold text-ink">Listing photos</h4>
+          <p className="text-xs text-muted-foreground">Upload directly from your device or paste an existing image URL.</p>
+        </div>
+        <label className="inline-flex cursor-pointer items-center rounded-full border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-accent">
+          {uploading ? "Uploading…" : "Upload photo"}
+          <input type="file" accept="image/*" className="hidden" disabled={uploading} onChange={(e) => uploadPhoto(e.target.files?.[0])} />
+        </label>
+      </div>
+      <div className="flex flex-wrap gap-2"><Input className="min-w-56 flex-1" aria-label="Photo URL" placeholder="Or paste a photo URL" value={url} onChange={(e) => setUrl(e.target.value)} /><Button variant="outline" onClick={addPhoto}>Add URL</Button></div>
       <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-        {photos.map((photo) => <div key={photo.id} className="flex min-w-0 items-center justify-between gap-2 rounded-md border border-border p-2">
-          <div className="min-w-0"><p className="truncate text-xs text-muted-foreground">{photo.url}</p><Badge className="mt-1" variant={photo.is_primary ? "default" : "secondary"}>{photo.is_primary ? "Cover photo" : "Gallery photo"}</Badge></div>
-          <div className="flex shrink-0 gap-1">{!photo.is_primary && <Button size="sm" variant="outline" onClick={() => setPrimary(photo.id)}>Make cover</Button>}<Button size="sm" variant="ghost" onClick={() => removePhoto(photo.id)} aria-label="Remove photo">Remove</Button></div>
+        {photos.map((photo) => <div key={photo.id} className="overflow-hidden rounded-2xl border border-border bg-background">
+          <img src={photo.url} alt={photo.alt_text ?? "Property photo"} className="aspect-[4/3] w-full object-cover" />
+          <div className="flex items-center justify-between gap-2 p-3">
+            <Badge variant={photo.is_primary ? "default" : "secondary"}>{photo.is_primary ? "Cover photo" : "Gallery photo"}</Badge>
+            <div className="flex shrink-0 gap-1">{!photo.is_primary && <Button size="sm" variant="outline" onClick={() => setPrimary(photo.id)}>Make cover</Button>}<Button size="sm" variant="ghost" onClick={() => removePhoto(photo.id)} aria-label="Remove photo">Remove</Button></div>
+          </div>
         </div>)}
       </div>
     </section>
