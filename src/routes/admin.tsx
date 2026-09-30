@@ -239,6 +239,8 @@ function Properties() {
   const qc = useQueryClient();
   const q = useProps();
   const [editing, setEditing] = useState<string | "new" | null>(null);
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [search, setSearch] = useState("");
   const save = useMutation({
     mutationFn: async ({ id, values }: { id: string | null; values: PropertyFormValues }) => {
       const { name, slug, city, state, address, property_type, description, bedrooms, bathrooms, max_guests, base_price, cleaning_fee, min_nights, house_rules, cancellation_policy } = values;
@@ -276,23 +278,50 @@ function Properties() {
     onSuccess: () => {
       toast.success("Property updated");
       qc.invalidateQueries({ queryKey: ["admin-properties"] });
+      qc.invalidateQueries({ queryKey: ["properties"] });
     },
     onError: (e) => toast.error(e instanceof Error ? e.message : "Update failed"),
   });
+  const rows = (q.data ?? []).filter((p) => {
+    const matchesStatus = statusFilter === "all" || p.status === statusFilter;
+    const term = search.trim().toLowerCase();
+    const matchesSearch = !term || [p.name, p.city, p.state ?? "", p.property_type].some((v) => v.toLowerCase().includes(term));
+    return matchesStatus && matchesSearch;
+  });
   return (
-    <div className="mt-6 space-y-3">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-sm text-muted-foreground">{q.data?.length ?? 0} listings</p>
-        <Button onClick={() => setEditing(editing === "new" ? null : "new")}>{editing === "new" ? "Close form" : "Add property"}</Button>
+    <div className="mt-6">
+      <SectionIntro
+        eyebrow="Inventory"
+        title="Properties"
+        description="Manage listing content, publishing status, pricing and gallery images."
+        action={<Button onClick={() => setEditing(editing === "new" ? null : "new")}>{editing === "new" ? "Close form" : "Add property"}</Button>}
+      />
+      <div className={card + " mb-4 grid gap-3 md:grid-cols-[1fr_180px_auto]"}>
+        <Input placeholder="Search by property, city or type" value={search} onChange={(e) => setSearch(e.target.value)} />
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <SelectTrigger><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All statuses</SelectItem>
+            {PROPERTY_STATUSES.map((s) => <SelectItem key={s} value={s} className="capitalize">{s}</SelectItem>)}
+          </SelectContent>
+        </Select>
+        <div className="flex items-center justify-end text-sm text-muted-foreground">{rows.length} of {q.data?.length ?? 0} listings</div>
       </div>
-      {editing === "new" && <PropertyEditor onCancel={() => setEditing(null)} onSave={(values) => save.mutate({ id: null, values })} saving={save.isPending} />}
-      {(q.data ?? []).map((p) => (
-        <div key={p.id} className="space-y-3">
-          <PropertyRow p={p} onSave={(patch) => updateQuick.mutate({ id: p.id, patch })} onEdit={() => setEditing(editing === p.id ? null : p.id)} editing={editing === p.id} />
-          {editing === p.id && <PropertyEditor key={p.id} property={p} onCancel={() => setEditing(null)} onSave={(values) => save.mutate({ id: p.id, values })} saving={save.isPending} />}
-        </div>
-      ))}
-      {!q.isLoading && (q.data ?? []).length === 0 && editing !== "new" && <p className="text-muted-foreground">No listings yet.</p>}
+      <div className="space-y-4">
+        {editing === "new" && <PropertyEditor onCancel={() => setEditing(null)} onSave={(values) => save.mutate({ id: null, values })} saving={save.isPending} />}
+        {rows.map((p) => (
+          <div key={p.id} className="space-y-3">
+            <PropertyRow p={p} onSave={(patch) => updateQuick.mutate({ id: p.id, patch })} onEdit={() => setEditing(editing === p.id ? null : p.id)} editing={editing === p.id} />
+            {editing === p.id && <PropertyEditor key={p.id} property={p} onCancel={() => setEditing(null)} onSave={(values) => save.mutate({ id: p.id, values })} saving={save.isPending} />}
+          </div>
+        ))}
+        {!q.isLoading && rows.length === 0 && editing !== "new" && (
+          <div className={card + " py-12 text-center"}>
+            <p className="font-semibold text-ink">No matching properties</p>
+            <p className="mt-1 text-sm text-muted-foreground">Adjust your search or status filter.</p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
