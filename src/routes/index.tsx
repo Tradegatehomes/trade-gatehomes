@@ -19,13 +19,13 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "Verified shortlet apartments in Lagos, Abuja and Port Harcourt. Live availability calendars, clear Naira pricing, instant booking.",
+          "Verified shortlet apartments in Lagos, Abuja and Port Harcourt. Live availability calendars, clear Naira pricing, and quick reservation requests.",
       },
       { property: "og:title", content: "TradeGate Continental Homes — Shortlet apartments in Nigeria" },
       {
         property: "og:description",
         content:
-          "Verified shortlet apartments in Lagos, Abuja and Port Harcourt. Live availability calendars, clear Naira pricing, instant booking.",
+          "Verified shortlet apartments in Lagos, Abuja and Port Harcourt. Live availability calendars, clear Naira pricing, and quick reservation requests.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -51,7 +51,7 @@ function HomePage() {
               Your home away from home, booked in minutes.
             </h1>
             <p className="mt-4 max-w-lg text-base text-muted-foreground sm:text-lg">
-              Real availability calendars, transparent Naira pricing and instant confirmation —
+              Real availability calendars, transparent Naira pricing, and a straightforward reservation process —
               no endless back-and-forth with hosts.
             </p>
             <div className="mt-8">
@@ -144,8 +144,8 @@ function HomePage() {
             },
             {
               icon: Wallet,
-              title: "Pay your way",
-              body: "Book with a deposit and settle the balance before check-in, or pay in full — your choice.",
+              title: "Clear pricing",
+              body: "See the nightly rate, fees and stay total before you send your reservation request.",
             },
             {
               icon: ShieldCheck,
@@ -171,7 +171,7 @@ function HomePage() {
             Ready when you are.
           </h2>
           <p className="mx-auto mt-3 max-w-md text-white/70">
-            Pick your dates, choose deposit or full payment, and get instant confirmation.
+            Pick your dates, review the total, and send your reservation request in a few simple steps.
           </p>
           <Button asChild size="lg" className="mt-6 rounded-full bg-brand text-brand-foreground hover:bg-brand/90">
             <Link to="/properties">Find your stay</Link>
