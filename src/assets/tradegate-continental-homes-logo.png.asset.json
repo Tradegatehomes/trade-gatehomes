@@ -1,11 +1,11 @@
 {
-  "version": 1,
   "asset_id": "045938d7-756c-46b5-9038-d0c838a2869c",
-  "project_id": "11f110fc-869f-4fe8-825b-76211b91b975",
-  "url": "/__l5e/assets-v1/045938d7-756c-46b5-9038-d0c838a2869c/tradegate-continental-homes-logo.png",
-  "r2_key": "a/v1/11f110fc-869f-4fe8-825b-76211b91b975/045938d7-756c-46b5-9038-d0c838a2869c/tradegate-continental-homes-logo.png",
-  "original_filename": "tradegate-continental-homes-logo.png",
-  "size": 925416,
   "content_type": "image/png",
-  "created_at": "2026-09-29T19:46:10Z"
+  "created_at": "2026-09-29T19:46:10Z",
+  "original_filename": "tradegate-continental-homes-logo.png",
+  "project_id": "eb603eb7-8223-427a-a144-eb5eba0487b6",
+  "r2_key": "a/v1/eb603eb7-8223-427a-a144-eb5eba0487b6/045938d7-756c-46b5-9038-d0c838a2869c/tradegate-continental-homes-logo.png",
+  "size": 925416,
+  "url": "/__l5e/assets-v1/045938d7-756c-46b5-9038-d0c838a2869c/tradegate-continental-homes-logo.png",
+  "version": 1
 }
