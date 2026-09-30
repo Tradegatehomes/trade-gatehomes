@@ -298,7 +298,7 @@ function Bookings() {
       <div className={card + " mb-4 flex flex-wrap items-center justify-between gap-3"}>
         <div><p className="text-sm font-semibold text-ink">Booking queue</p><p className="text-xs text-muted-foreground">{rows.length} matching bookings</p></div>
         <Select value={filter} onValueChange={setFilter}>
-        <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
+        <SelectTrigger className="w-full sm:w-48"><SelectValue /></SelectTrigger>
         <SelectContent>
           <SelectItem value="all">All statuses</SelectItem>
           {BOOKING_STATUSES.map((s) => <SelectItem key={s} value={s} className="capitalize">{s.replace("_", " ")}</SelectItem>)}
@@ -317,7 +317,7 @@ function Bookings() {
             <p className="text-xs text-muted-foreground">{b.reference} · {b.guest_email}{b.guest_phone ? ` · ${b.guest_phone}` : ""}</p>
           </div>
           <Select value={b.status} onValueChange={(v) => update.mutate({ id: b.id, status: v as BookingStatus })}>
-            <SelectTrigger className="w-44 capitalize"><SelectValue /></SelectTrigger>
+            <SelectTrigger className="w-full capitalize sm:w-44"><SelectValue /></SelectTrigger>
             <SelectContent>
               {BOOKING_STATUSES.map((s) => <SelectItem key={s} value={s} className="capitalize">{s.replace("_", " ")}</SelectItem>)}
             </SelectContent>
