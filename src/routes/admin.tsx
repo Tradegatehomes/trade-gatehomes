@@ -76,9 +76,20 @@ function AdminPage() {
 
 function Shell({ children }: { children: React.ReactNode }) {
   return (
-    <div className="mx-auto max-w-6xl px-4 py-10">
-      <h1 className="mb-6 font-display text-4xl font-bold text-ink">Admin</h1>
-      {children}
+    <div className="min-h-[calc(100vh-5rem)] bg-cream/40">
+      <div className="mx-auto max-w-7xl px-4 py-8 lg:px-6">
+        <div className="mb-7 flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-brand">TradeGate operations</p>
+            <h1 className="mt-1 font-display text-4xl font-bold tracking-tight text-ink">Admin dashboard</h1>
+            <p className="mt-2 text-sm text-muted-foreground">Manage listings, bookings, pricing, reviews and availability from one place.</p>
+          </div>
+          <Button asChild variant="outline" className="rounded-full bg-card">
+            <Link to="/">View public site</Link>
+          </Button>
+        </div>
+        {children}
+      </div>
     </div>
   );
 }
