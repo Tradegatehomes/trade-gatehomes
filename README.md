@@ -1,4 +1,4 @@
-# Tradegate
+# Tradegates
 
 Implement exactly the screenshot and nothing else
 
