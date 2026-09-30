@@ -16,12 +16,17 @@ export function SiteHeader() {
   return (
     <header className="sticky top-0 z-40 border-b border-border/70 bg-background/85 backdrop-blur">
       <div className="mx-auto flex h-20 max-w-6xl items-center justify-between gap-4 px-4">
-        <Link to="/" aria-label="TradeGate Continental Homes home" className="shrink-0">
+        <Link to="/" aria-label="TradeGate Continental Homes home" className="flex shrink-0 items-center gap-3">
           <img
-            src="/tradegate-logo.svg"
-            alt="TradeGate Continental Homes"
-            className="h-16 w-auto object-contain"
+            src="/tradegate-icon.png"
+            alt=""
+            aria-hidden="true"
+            className="h-12 w-16 object-contain"
           />
+          <div className="hidden leading-tight sm:block">
+            <p className="font-display text-lg font-bold tracking-wide text-ink">TRADEGATE</p>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-brand">Continental Homes</p>
+          </div>
         </Link>
 
         <nav className="hidden items-center gap-1 md:flex">
@@ -51,11 +56,13 @@ export function SiteHeader() {
           </SheetTrigger>
           <SheetContent side="right" className="w-72">
             <SheetTitle>
-              <img
-                src="/tradegate-logo.svg"
-                alt="TradeGate Continental Homes"
-                className="h-24 w-auto object-contain"
-              />
+              <div className="flex items-center gap-3">
+                <img src="/tradegate-icon.png" alt="" aria-hidden="true" className="h-14 w-20 object-contain" />
+                <div className="text-left leading-tight">
+                  <p className="font-display text-lg font-bold tracking-wide text-ink">TRADEGATE</p>
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-brand">Continental Homes</p>
+                </div>
+              </div>
             </SheetTitle>
             <nav className="mt-6 flex flex-col gap-1">
               {links.map((l) => (
