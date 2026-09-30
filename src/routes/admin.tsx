@@ -559,8 +559,15 @@ function PropertyPhotos({ propertyId, photos }: { propertyId: string; photos: { 
     await refresh();
   }
   async function removePhoto(id: string) {
+    const photo = photos.find((item) => item.id === id);
     const { error } = await supabase.from("property_images").delete().eq("id", id);
     if (error) { toast.error(error.message); return; }
+
+    if (photo?.url.includes("/storage/v1/object/public/property-images/")) {
+      const path = photo.url.split("/storage/v1/object/public/property-images/")[1]?.split("?")[0];
+      if (path) await supabase.storage.from("property-images").remove([decodeURIComponent(path)]);
+    }
+    toast.success("Photo removed");
     await refresh();
   }
   return (
