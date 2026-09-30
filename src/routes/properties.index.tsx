@@ -148,9 +148,9 @@ function PropertiesPage() {
 
       {/* Filter row */}
       <div
-        className={`${filtersOpen ? "flex" : "hidden"} mt-3 flex-nowrap items-center gap-2 sm:mt-4 sm:flex sm:flex-wrap sm:gap-3`}
+        className={`${filtersOpen ? "grid" : "hidden"} mt-3 gap-2 sm:mt-4 sm:flex sm:flex-wrap sm:items-center sm:gap-3`}
       >
-        <div className="flex min-w-0 flex-1 items-center gap-1 rounded-lg border border-input bg-card px-2 py-1 sm:flex-none sm:gap-2 sm:rounded-none sm:border-0 sm:bg-transparent sm:p-0">
+        <div className="grid grid-cols-[1fr_auto_1fr_auto] items-center gap-1 rounded-xl border border-input bg-card px-2 py-1 sm:flex sm:flex-none sm:gap-2 sm:rounded-none sm:border-0 sm:bg-transparent sm:p-0">
           <Input
             type="number"
             placeholder="Min ₦"
@@ -176,13 +176,13 @@ function PropertiesPage() {
             <span className="hidden sm:inline">Apply</span>
           </Button>
         </div>
-        <div className="flex shrink-0 items-center gap-2 sm:ml-auto">
+        <div className="flex w-full items-center gap-2 sm:ml-auto sm:w-auto sm:shrink-0">
           <span className="hidden text-sm font-medium text-ink/70 sm:inline">Sort</span>
           <Select
             value={search.sort ?? "featured"}
             onValueChange={(v) => setSearch({ sort: v === "featured" ? undefined : v })}
           >
-            <SelectTrigger className="h-9 w-32 rounded-lg text-xs sm:h-10 sm:w-44 sm:rounded-full sm:text-sm">
+            <SelectTrigger className="h-10 w-full rounded-xl text-sm sm:w-44 sm:rounded-full">
               <SelectValue placeholder="Sort" />
             </SelectTrigger>
             <SelectContent>
