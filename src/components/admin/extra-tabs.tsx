@@ -28,7 +28,7 @@ function PropertyPicker({ value, onChange, allowAll }: { value: string; onChange
   const props = usePropertyList();
   return (
     <Select value={value} onValueChange={onChange}>
-      <SelectTrigger className="w-56"><SelectValue placeholder="Property" /></SelectTrigger>
+      <SelectTrigger className="w-full sm:w-56"><SelectValue placeholder="Property" /></SelectTrigger>
       <SelectContent>
         {allowAll && <SelectItem value="all">All properties</SelectItem>}
         {(props.data ?? []).map((p) => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
@@ -85,26 +85,26 @@ export function PricingRules() {
       <div className={card}><PropertyPicker value={propertyId} onChange={setPropertyId} /></div>
       {propertyId && (
         <>
-          <div className={`${card} flex flex-wrap items-end gap-2`}>
+          <div className={`${card} grid gap-3 sm:grid-cols-2 xl:grid-cols-4`}>
             <Select value={type} onValueChange={(v) => setType(v as RuleType)}>
-              <SelectTrigger className="w-40 capitalize"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="w-full capitalize"><SelectValue /></SelectTrigger>
               <SelectContent>{RULE_TYPES.map((t) => <SelectItem key={t} value={t} className="capitalize">{t.replace("_", " ")}</SelectItem>)}</SelectContent>
             </Select>
-            <Input className="w-40" placeholder="Label (e.g. Detty December)" value={label} onChange={(e) => setLabel(e.target.value)} />
+            <Input className="w-full" placeholder="Label (e.g. Detty December)" value={label} onChange={(e) => setLabel(e.target.value)} />
             {needsDates && (
               <>
-                <Input type="date" className="w-40" value={start} onChange={(e) => setStart(e.target.value)} aria-label="From" />
-                <Input type="date" className="w-40" value={end} onChange={(e) => setEnd(e.target.value)} aria-label="Until" />
+                <Input type="date" className="w-full" value={start} onChange={(e) => setStart(e.target.value)} aria-label="From" />
+                <Input type="date" className="w-full" value={end} onChange={(e) => setEnd(e.target.value)} aria-label="Until" />
               </>
             )}
-            <Input type="number" className="w-36" placeholder="Nightly price ₦" value={price} onChange={(e) => setPrice(e.target.value)} />
-            <Input type="number" className="w-28" placeholder="or % +/-" value={modifier} onChange={(e) => setModifier(e.target.value)} />
-            <Input type="number" className="w-28" placeholder="Min nights" value={minNights} onChange={(e) => setMinNights(e.target.value)} />
-            <Button onClick={add}>Add rule</Button>
+            <Input type="number" className="w-full" placeholder="Nightly price ₦" value={price} onChange={(e) => setPrice(e.target.value)} />
+            <Input type="number" className="w-full" placeholder="or % +/-" value={modifier} onChange={(e) => setModifier(e.target.value)} />
+            <Input type="number" className="w-full" placeholder="Min nights" value={minNights} onChange={(e) => setMinNights(e.target.value)} />
+            <Button className="w-full sm:w-auto" onClick={add}>Add rule</Button>
           </div>
           {q.data?.length === 0 && <p className="text-muted-foreground">No pricing rules — the base price applies.</p>}
           {(q.data ?? []).map((r) => (
-            <div key={r.id} className={`${card} flex items-center justify-between`}>
+            <div key={r.id} className={`${card} flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center`}>
               <p className="text-sm">
                 <Badge variant="secondary" className="mr-2 capitalize">{r.rule_type.replace("_", " ")}</Badge>
                 <span className="font-semibold text-ink">{r.label ?? "Untitled"}</span>
@@ -160,10 +160,10 @@ export function PropertyAmenities() {
   return (
     <div className="mt-6 space-y-4">
       <div><p className="text-xs font-bold uppercase tracking-[0.16em] text-brand">Listing details</p><h2 className="mt-1 font-display text-2xl font-bold text-ink">Amenities</h2><p className="mt-1 text-sm text-muted-foreground">Control the amenities guests see on each property listing.</p></div>
-      <div className={card + " flex flex-wrap gap-2"}>
+      <div className={card + " grid gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]"}>
         <PropertyPicker value={propertyId} onChange={setPropertyId} />
-        <Input className="w-48" placeholder="New amenity name" value={newName} onChange={(e) => setNewName(e.target.value)} />
-        <Button variant="outline" onClick={addAmenity}>Add amenity</Button>
+        <Input className="w-full" placeholder="New amenity name" value={newName} onChange={(e) => setNewName(e.target.value)} />
+        <Button className="w-full sm:w-auto" variant="outline" onClick={addAmenity}>Add amenity</Button>
       </div>
       {propertyId ? (
         <div className={`${card} flex flex-wrap gap-2`}>
@@ -276,22 +276,22 @@ export function Discounts() {
   return (
     <div className="mt-6 space-y-3">
       <div><p className="text-xs font-bold uppercase tracking-[0.16em] text-brand">Promotions</p><h2 className="mt-1 font-display text-2xl font-bold text-ink">Discounts</h2><p className="mt-1 text-sm text-muted-foreground">Create targeted promo codes with dates, usage limits and minimum-stay rules.</p></div>
-      <div className={`${card} flex flex-wrap items-end gap-2`}>
-        <Input className="w-36" placeholder="CODE" value={code} onChange={(e) => setCode(e.target.value)} />
+      <div className={`${card} grid gap-3 sm:grid-cols-2 xl:grid-cols-4`}>
+        <Input className="w-full" placeholder="CODE" value={code} onChange={(e) => setCode(e.target.value)} />
         <Select value={kind} onValueChange={(v) => setKind(v as "percent" | "amount")}>
-          <SelectTrigger className="w-32"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="percent">% off</SelectItem>
             <SelectItem value="amount">₦ off</SelectItem>
           </SelectContent>
         </Select>
-        <Input className="w-28" type="number" placeholder="Value" value={value} onChange={(e) => setValue(e.target.value)} />
-        <Input type="date" className="w-40" value={start} onChange={(e) => setStart(e.target.value)} aria-label="Valid from" />
-        <Input type="date" className="w-40" value={end} onChange={(e) => setEnd(e.target.value)} aria-label="Valid until" />
-        <Input className="w-28" type="number" placeholder="Max uses" value={limit} onChange={(e) => setLimit(e.target.value)} />
-        <Input className="w-28" type="number" placeholder="Min nights" value={minNights} onChange={(e) => setMinNights(e.target.value)} />
+        <Input className="w-full" type="number" placeholder="Value" value={value} onChange={(e) => setValue(e.target.value)} />
+        <Input type="date" className="w-full" value={start} onChange={(e) => setStart(e.target.value)} aria-label="Valid from" />
+        <Input type="date" className="w-full" value={end} onChange={(e) => setEnd(e.target.value)} aria-label="Valid until" />
+        <Input className="w-full" type="number" placeholder="Max uses" value={limit} onChange={(e) => setLimit(e.target.value)} />
+        <Input className="w-full" type="number" placeholder="Min nights" value={minNights} onChange={(e) => setMinNights(e.target.value)} />
         <PropertyPicker value={propertyId} onChange={setPropertyId} allowAll />
-        <Button onClick={add}>Add code</Button>
+        <Button className="w-full sm:w-auto" onClick={add}>Add code</Button>
       </div>
       {(q.data ?? []).map((d) => (
         <div key={d.id} className={`${card} flex flex-wrap items-center justify-between gap-3`}>
@@ -351,13 +351,13 @@ export function Reviews() {
               <Button size="sm" variant="outline" onClick={() => patch(r.id, { approved: !r.approved })}>{r.approved ? "Hide" : "Publish"}</Button>
             </div>
           </div>
-          <div className="flex gap-2">
+          <div className="grid gap-2 sm:grid-cols-[1fr_auto]">
             <Input
               placeholder="Reply as host (shown under the review)"
               value={drafts[r.id] ?? r.admin_response ?? ""}
               onChange={(e) => setDrafts((d) => ({ ...d, [r.id]: e.target.value }))}
             />
-            <Button size="sm" variant="outline" onClick={() => patch(r.id, { admin_response: (drafts[r.id] ?? r.admin_response ?? "").trim() || null })}>
+            <Button size="sm" className="w-full sm:w-auto" variant="outline" onClick={() => patch(r.id, { admin_response: (drafts[r.id] ?? r.admin_response ?? "").trim() || null })}>
               Save reply
             </Button>
           </div>
