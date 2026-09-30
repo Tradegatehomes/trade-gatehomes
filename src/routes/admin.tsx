@@ -96,15 +96,35 @@ function Shell({ children }: { children: React.ReactNode }) {
 
 const card = "rounded-3xl border border-border/80 bg-card p-5 shadow-sm";
 
+type AdminProperty = Database["public"]["Tables"]["properties"]["Row"] & {
+  property_images?: { url: string; is_primary: boolean; sort_order: number }[];
+};
+
 function useProps() {
   return useQuery({
     queryKey: ["admin-properties"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("properties").select("*").order("name");
+      const { data, error } = await supabase
+        .from("properties")
+        .select("*,property_images(url,is_primary,sort_order)")
+        .order("name");
       if (error) throw error;
-      return data;
+      return data as AdminProperty[];
     },
   });
+}
+
+function SectionIntro({ eyebrow, title, description, action }: { eyebrow?: string; title: string; description: string; action?: React.ReactNode }) {
+  return (
+    <div className="mb-5 flex flex-wrap items-end justify-between gap-4">
+      <div>
+        {eyebrow && <p className="text-xs font-bold uppercase tracking-[0.16em] text-brand">{eyebrow}</p>}
+        <h2 className="mt-1 font-display text-2xl font-bold text-ink">{title}</h2>
+        <p className="mt-1 max-w-2xl text-sm text-muted-foreground">{description}</p>
+      </div>
+      {action}
+    </div>
+  );
 }
 
 function Overview() {
