@@ -19,8 +19,6 @@ function PropertyCardGallery({ property }: { property: PropertyCardDto }) {
               const el = e.currentTarget;
               setActive(Math.max(0, Math.min(images.length - 1, Math.round(el.scrollLeft / el.clientWidth))));
             }}
-            onClick={(e) => e.preventDefault()}
-            onPointerDown={(e) => e.stopPropagation()}
             aria-label={`${property.name} photos`}
           >
             {images.map((src, index) => (
