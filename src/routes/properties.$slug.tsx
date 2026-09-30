@@ -58,7 +58,9 @@ export const Route = createFileRoute("/properties/$slug")({
             `Book ${p.name} in ${p.city}, Nigeria. Live availability and clear Naira pricing.`,
         },
         { property: "og:type", content: "website" },
+        ...(p.image ? [{ property: "og:image", content: p.image }] : []),
         { name: "twitter:card", content: "summary_large_image" },
+        ...(p.image ? [{ name: "twitter:image", content: p.image }] : []),
       ],
     };
   },
@@ -161,7 +163,7 @@ function PropertyDetailPage() {
             <div className="rounded-3xl bg-card p-6 shadow-card">
               <h3 className="font-display text-lg font-bold text-ink">House rules</h3>
               <p className="mt-2 text-sm text-muted-foreground">
-                {p.house_rules ?? "[House rules placeholder]"}
+                {p.house_rules ?? "House rules will be shared with you before your reservation is confirmed."}
               </p>
             </div>
             <div className="rounded-3xl bg-card p-6 shadow-card">
@@ -169,7 +171,9 @@ function PropertyDetailPage() {
               <p className="mt-2 text-sm text-muted-foreground">
                 Check-in from {p.check_in_time} · Check-out by {p.check_out_time}
               </p>
-              <p className="mt-2 text-sm text-muted-foreground">{p.cancellation_policy}</p>
+              <p className="mt-2 text-sm text-muted-foreground">
+                {p.cancellation_policy ?? "Cancellation terms will be confirmed before payment."}
+              </p>
             </div>
           </section>
 
