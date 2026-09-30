@@ -22,7 +22,7 @@ export interface PropertyCardDto {
   base_price: number;
   featured: boolean;
   image: string | null;
-  images: string[];
+  gallery: string[];
 }
 
 export interface PropertyDetailDto extends PropertyCardDto {
@@ -109,7 +109,7 @@ export const listProperties = createServerFn({ method: "GET" })
         base_price: num(r.base_price),
         featured: r.featured,
         image: sorted[0]?.url ?? null,
-        images: sorted.map((img) => img.url),
+        gallery: sorted.map((img) => img.url),
       };
     });
   });
@@ -160,6 +160,7 @@ export const getProperty = createServerFn({ method: "GET" })
       whatsapp: r.whatsapp,
       email: r.email,
       image: images[0]?.url ?? null,
+      gallery: images.map((i: any) => i.url),
       images: images.map((i: any) => ({ url: i.url, alt_text: i.alt_text })),
       amenities: (r.property_amenities ?? []).map((pa: any) => pa.amenities).filter(Boolean),
       reviews,
