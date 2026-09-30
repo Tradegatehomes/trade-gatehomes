@@ -149,7 +149,7 @@ function PropertiesPage() {
             value={search.sort ?? "featured"}
             onValueChange={(v) => setSearch({ sort: v === "featured" ? undefined : v })}
           >
-            <SelectTrigger className="h-9 w-28 rounded-lg text-xs sm:h-10 sm:w-44 sm:rounded-full sm:text-sm">
+            <SelectTrigger className="h-9 w-32 rounded-lg text-xs sm:h-10 sm:w-44 sm:rounded-full sm:text-sm">
               <SelectValue placeholder="Sort" />
             </SelectTrigger>
             <SelectContent>
