@@ -349,12 +349,18 @@ function PropertyEditor({ property, onCancel, onSave, saving }: {
   const slugFromName = (value: string) => field("slug", value.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""));
   const photos = usePropertyPhotos(property?.id);
   return (
-    <div className={`${card} space-y-5`}>
-      <div>
-        <h3 className="font-display text-xl font-bold text-ink">{property ? "Edit listing" : "New listing"}</h3>
-        <p className="mt-1 text-sm text-muted-foreground">New listings are saved as drafts until you publish them.</p>
+    <div className={`${card} space-y-6 border-brand/20`}>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[0.16em] text-brand">{property ? "Listing workspace" : "Create inventory"}</p>
+          <h3 className="mt-1 font-display text-2xl font-bold text-ink">{property ? "Edit listing" : "New listing"}</h3>
+          <p className="mt-1 text-sm text-muted-foreground">Complete the essentials first, then add photos and publish when the listing is ready.</p>
+        </div>
+        {property && <Badge variant={property.status === "active" ? "default" : "secondary"} className="capitalize">{property.status}</Badge>}
       </div>
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="rounded-2xl bg-secondary/40 p-4">
+        <p className="mb-4 text-sm font-semibold text-ink">Listing basics</p>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <FormField label="Property name"><Input value={values.name} onChange={(e) => { field("name", e.target.value); if (!property) slugFromName(e.target.value); }} /></FormField>
         <FormField label="Listing address"><Input value={values.address} onChange={(e) => field("address", e.target.value)} /></FormField>
         <FormField label="URL name"><Input value={values.slug} onChange={(e) => field("slug", e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "-"))} /></FormField>
@@ -367,8 +373,13 @@ function PropertyEditor({ property, onCancel, onSave, saving }: {
         <FormField label="Nightly price (₦)"><Input type="number" min="0" value={values.base_price} onChange={(e) => field("base_price", e.target.value)} /></FormField>
         <FormField label="Cleaning fee (₦)"><Input type="number" min="0" value={values.cleaning_fee} onChange={(e) => field("cleaning_fee", e.target.value)} /></FormField>
         <FormField label="Minimum nights"><Input type="number" min="1" value={values.min_nights} onChange={(e) => field("min_nights", e.target.value)} /></FormField>
+        </div>
       </div>
-      <FormField label="Description"><Textarea value={values.description} onChange={(e) => field("description", e.target.value)} rows={4} /></FormField>
+      <div>
+        <p className="mb-3 text-sm font-semibold text-ink">Guest-facing content</p>
+        <FormField label="Description"><Textarea value={values.description} onChange={(e) => field("description", e.target.value)} rows={4} /></FormField>
+        </FormField>
+      </div>
       <div className="grid gap-4 md:grid-cols-2">
         <FormField label="House rules"><Textarea value={values.house_rules} onChange={(e) => field("house_rules", e.target.value)} rows={3} /></FormField>
         <FormField label="Cancellation policy"><Textarea value={values.cancellation_policy} onChange={(e) => field("cancellation_policy", e.target.value)} rows={3} /></FormField>
