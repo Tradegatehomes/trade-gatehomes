@@ -21,7 +21,7 @@ export function SiteHeader() {
           <img
             src={logoAsset.url}
             alt="TradeGate Continental Homes"
-            className="h-16 w-auto object-contain"
+            className="h-16 w-auto object-contain mix-blend-multiply"
           />
         </Link>
 
@@ -55,7 +55,7 @@ export function SiteHeader() {
               <img
                 src={logoAsset.url}
                 alt="TradeGate Continental Homes"
-                className="h-24 w-auto object-contain"
+                className="h-24 w-auto object-contain mix-blend-multiply"
               />
             </SheetTitle>
             <nav className="mt-6 flex flex-col gap-1">

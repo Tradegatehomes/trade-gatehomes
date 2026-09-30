@@ -75,7 +75,7 @@
   --font-family-display: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
   --font-family-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
 
-  --brand: oklch(0.667 0.201 33.3);
+  --brand: oklch(0.64 0.115 75);
   --brand-foreground: oklch(0.99 0.005 80);
   --ink: oklch(0.201 0.021 300);
   --ink-foreground: oklch(0.99 0.005 80);
