@@ -33,6 +33,7 @@ function AuthPage() {
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [magicBusy, setMagicBusy] = useState(false);
+  const [resetBusy, setResetBusy] = useState(false);
   const target = redirect && redirect.startsWith("/") ? redirect : "/account";
 
   useEffect(() => {
@@ -60,6 +61,27 @@ function AuthPage() {
       toast.error(err instanceof Error ? err.message : "Could not send sign-in link");
     } finally {
       setMagicBusy(false);
+    }
+  }
+
+  async function sendPasswordReset() {
+    const cleanEmail = email.trim().toLowerCase();
+    if (!cleanEmail) {
+      toast.error("Enter your email address first.");
+      return;
+    }
+
+    setResetBusy(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(cleanEmail, {
+        redirectTo: window.location.origin + "/reset-password",
+      });
+      if (error) throw error;
+      toast.success("Password reset link sent. Check your email.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not send password reset email");
+    } finally {
+      setResetBusy(false);
     }
   }
 
@@ -108,7 +130,19 @@ function AuthPage() {
             <Input id="email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="password">Password</Label>
+            <div className="flex items-center justify-between gap-3">
+              <Label htmlFor="password">Password</Label>
+              {mode === "signin" && (
+                <button
+                  type="button"
+                  className="text-xs font-semibold text-brand hover:underline"
+                  disabled={resetBusy}
+                  onClick={sendPasswordReset}
+                >
+                  {resetBusy ? "Sending…" : "Forgot password?"}
+                </button>
+              )}
+            </div>
             <Input id="password" type="password" required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} />
           </div>
           <Button type="submit" className="w-full rounded-full" disabled={busy}>
