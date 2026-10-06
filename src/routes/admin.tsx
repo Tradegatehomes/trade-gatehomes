@@ -395,12 +395,17 @@ function Overview() {
 function Bookings() {
   const qc = useQueryClient();
   const [filter, setFilter] = useState<string>("all");
+  const [bookingSearch, setBookingSearch] = useState("");
+  const [bookingProperty, setBookingProperty] = useState("all");
+  const [bookingFrom, setBookingFrom] = useState("");
+  const [bookingTo, setBookingTo] = useState("");
+  const bookingProps = useProps();
   const q = useQuery({
     queryKey: ["admin-bookings"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("bookings")
-        .select("id,reference,guest_name,guest_email,guest_phone,check_in,check_out,guests,total_amount,status,properties(name)")
+        .select("id,reference,property_id,guest_name,guest_email,guest_phone,check_in,check_out,guests,total_amount,status,properties(name)")
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data;
@@ -418,19 +423,42 @@ function Bookings() {
     },
     onError: (e) => toast.error(e instanceof Error ? e.message : "Update failed"),
   });
-  const rows = (q.data ?? []).filter((b) => filter === "all" || b.status === filter);
+  const bookingTerm = bookingSearch.trim().toLowerCase();
+  const rows = (q.data ?? []).filter((b) => {
+    if (filter !== "all" && b.status !== filter) return false;
+    if (bookingProperty !== "all" && b.property_id !== bookingProperty) return false;
+    if (bookingFrom && b.check_in < bookingFrom) return false;
+    if (bookingTo && b.check_in > bookingTo) return false;
+    if (bookingTerm && ![b.reference, b.guest_name, b.guest_email, b.guest_phone ?? "", b.properties?.name ?? ""].some((value) => String(value).toLowerCase().includes(bookingTerm))) return false;
+    return true;
+  });
   return (
     <div className="mt-6">
       <SectionIntro eyebrow="Guest operations" title="Bookings" description="Review upcoming stays, guest details and booking status changes." />
-      <div className={card + " mb-4 flex flex-wrap items-center justify-between gap-3"}>
-        <div><p className="text-sm font-semibold text-ink">Booking queue</p><p className="text-xs text-muted-foreground">{rows.length} matching bookings</p></div>
+      <div className={card + " mb-4 grid gap-3 md:grid-cols-2 xl:grid-cols-5"}>
+        <div className="relative xl:col-span-2">
+          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Input className="pl-9" placeholder="Search guest, reference, email, phone or property" value={bookingSearch} onChange={(e) => setBookingSearch(e.target.value)} />
+        </div>
         <Select value={filter} onValueChange={setFilter}>
-        <SelectTrigger className="w-full sm:w-48"><SelectValue /></SelectTrigger>
-        <SelectContent>
-          <SelectItem value="all">All statuses</SelectItem>
-          {BOOKING_STATUSES.map((s) => <SelectItem key={s} value={s} className="capitalize">{s.replace("_", " ")}</SelectItem>)}
-        </SelectContent>
+          <SelectTrigger><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All statuses</SelectItem>
+            {BOOKING_STATUSES.map((s) => <SelectItem key={s} value={s} className="capitalize">{s.replace("_", " ")}</SelectItem>)}
+          </SelectContent>
         </Select>
+        <Select value={bookingProperty} onValueChange={setBookingProperty}>
+          <SelectTrigger><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All properties</SelectItem>
+            {(bookingProps.data ?? []).map((p) => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
+          </SelectContent>
+        </Select>
+        <div className="grid grid-cols-2 gap-2">
+          <Input type="date" aria-label="Check-in from" value={bookingFrom} onChange={(e) => setBookingFrom(e.target.value)} />
+          <Input type="date" aria-label="Check-in to" value={bookingTo} onChange={(e) => setBookingTo(e.target.value)} />
+        </div>
+        <div className="md:col-span-2 xl:col-span-5 text-xs text-muted-foreground">{rows.length} matching booking{rows.length === 1 ? "" : "s"}</div>
       </div>
       <div className="space-y-3">
       {q.isLoading && <p className="text-muted-foreground">Loading…</p>}
