@@ -50,13 +50,17 @@ BEGIN
     RAISE EXCEPTION 'That role cannot be invited to the admin area.';
   END IF;
 
-  SELECT p.id
+  SELECT u.id
   INTO v_user_id
-  FROM public.profiles p
-  WHERE lower(p.email) = v_email
+  FROM auth.users u
+  WHERE lower(u.email) = v_email
   LIMIT 1;
 
   IF v_user_id IS NOT NULL THEN
+    INSERT INTO public.profiles(id, email)
+    VALUES (v_user_id, v_email)
+    ON CONFLICT (id) DO UPDATE SET email = EXCLUDED.email;
+
     DELETE FROM public.user_roles WHERE user_id = v_user_id;
 
     INSERT INTO public.user_roles(user_id, role)
