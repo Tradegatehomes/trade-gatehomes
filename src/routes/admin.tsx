@@ -411,7 +411,18 @@ function Bookings() {
     notes: "",
   });
   const [creatingManualBooking, setCreatingManualBooking] = useState(false);
-  const bookingProps = useProps();
+  const bookingProps = useQuery({
+    queryKey: ["admin-booking-properties"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("properties")
+        .select("id,name,slug,status")
+        .in("status", ["active", "inactive", "draft", "maintenance"])
+        .order("name");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
   const q = useQuery({
     queryKey: ["admin-bookings"],
     queryFn: async () => {
