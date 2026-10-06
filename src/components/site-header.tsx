@@ -2,15 +2,19 @@ import { Link } from "@tanstack/react-router";
 import { Menu } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
+import { useStaff } from "@/hooks/use-staff";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
 
 export function SiteHeader() {
   const [open, setOpen] = useState(false);
   const { user } = useAuth();
+  const { isStaff } = useStaff();
   const links = [
     { to: "/properties" as const, label: "Browse homes" },
-    user ? { to: "/account" as const, label: "My trips" } : { to: "/auth" as const, label: "Sign in" },
+    user
+      ? { to: "/account" as const, label: isStaff ? "My Profile" : "My trips" }
+      : { to: "/auth" as const, label: "Sign in" },
   ];
 
   return (
