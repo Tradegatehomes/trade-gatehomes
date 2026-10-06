@@ -1,11 +1,12 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { ShieldCheck, UserCog } from "lucide-react";
+import { MailPlus, ShieldCheck, UserCog } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   ADMIN_PERMISSIONS,
@@ -35,6 +36,8 @@ const roleLabels: Record<AdminRole, string> = {
 export function UserAccess() {
   const db = supabase as any;
   const qc = useQueryClient();
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteRole, setInviteRole] = useState<Exclude<AdminRole, "guest">>("staff");
 
   const usersQuery = useQuery({
     queryKey: ["admin-user-access"],
@@ -88,6 +91,46 @@ export function UserAccess() {
         properties: (propertiesResult.data ?? []) as { id: string; name: string }[],
       };
     },
+  });
+
+  const inviteMutation = useMutation({
+    mutationFn: async () => {
+      const email = inviteEmail.trim().toLowerCase();
+      if (!email) throw new Error("Enter an email address.");
+
+      const { data, error } = await db.rpc("invite_admin_by_email", {
+        p_email: email,
+        p_role: inviteRole,
+      });
+      if (error) throw error;
+
+      if ((data as any)?.status === "pending") {
+        const { error: emailError } = await supabase.auth.signInWithOtp({
+          email,
+          options: { emailRedirectTo: window.location.origin + "/admin" },
+        });
+        if (emailError) {
+          return { ...data, emailSent: false, emailError: emailError.message };
+        }
+        return { ...data, emailSent: true };
+      }
+
+      return data;
+    },
+    onSuccess: (result: any) => {
+      setInviteEmail("");
+      qc.invalidateQueries({ queryKey: ["admin-user-access"] });
+      if (result?.status === "assigned") {
+        toast.success("Admin access assigned");
+      } else if (result?.emailSent) {
+        toast.success("Admin invitation sent");
+      } else {
+        toast.success("Admin invitation saved");
+        if (result?.emailError) toast.error(result.emailError);
+      }
+    },
+    onError: (error) =>
+      toast.error(error instanceof Error ? error.message : "Could not add admin"),
   });
 
   const saveMutation = useMutation({
@@ -183,6 +226,46 @@ export function UserAccess() {
         <Badge variant="secondary" className="rounded-full">
           <ShieldCheck className="mr-1 size-3.5" /> Super Admin only
         </Badge>
+      </div>
+
+      <div className="mb-6 rounded-3xl border border-border/80 bg-card p-5 shadow-sm">
+        <div className="flex items-start gap-3">
+          <span className="grid size-10 shrink-0 place-items-center rounded-2xl bg-brand/10 text-brand">
+            <MailPlus className="size-5" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <h3 className="font-display text-lg font-bold text-ink">Add new admin</h3>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Enter their email and choose a role. Existing users are updated immediately; new users receive a sign-in invitation.
+            </p>
+            <div className="mt-4 grid gap-3 sm:grid-cols-[minmax(0,1fr)_220px_auto]">
+              <Input
+                type="email"
+                placeholder="name@example.com"
+                value={inviteEmail}
+                onChange={(event) => setInviteEmail(event.target.value)}
+                className="rounded-xl"
+              />
+              <Select value={inviteRole} onValueChange={(value) => setInviteRole(value as Exclude<AdminRole, "guest">)}>
+                <SelectTrigger className="rounded-xl">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="staff">Staff</SelectItem>
+                  <SelectItem value="property_manager">Property Manager</SelectItem>
+                  <SelectItem value="super_admin">Super Admin</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button
+                className="rounded-xl"
+                disabled={inviteMutation.isPending || !inviteEmail.trim()}
+                onClick={() => inviteMutation.mutate()}
+              >
+                {inviteMutation.isPending ? "Adding…" : "Add admin"}
+              </Button>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div className="space-y-4">
