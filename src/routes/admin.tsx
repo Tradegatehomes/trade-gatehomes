@@ -1,10 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { BarChart3, BedDouble, CalendarDays, CreditCard, Home, ListChecks, Percent, Settings2, Star, Tags } from "lucide-react";
+import { BarChart3, BedDouble, CalendarDays, CreditCard, Home, ListChecks, Percent, Settings2, ShieldCheck, Star, Tags } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { useStaff } from "@/hooks/use-staff";
+import { useAdminAccess, type AdminPermission } from "@/hooks/use-admin-access";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -13,6 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { formatDate, formatNaira } from "@/lib/format";
 import { Discounts, Payments, PricingRules, PropertyAmenities, Reviews } from "@/components/admin/extra-tabs";
+import { UserAccess } from "@/components/admin/user-access";
 import type { Database } from "@/integrations/supabase/types";
 
 type BookingStatus = Database["public"]["Enums"]["booking_status"];
@@ -41,7 +42,7 @@ export const Route = createFileRoute("/admin")({
 });
 
 function AdminPage() {
-  const { user, isStaff, loading } = useStaff();
+  const { user, isStaff, isSuperAdmin, can, loading } = useAdminAccess();
   if (loading) return <Shell><p className="text-muted-foreground">Loading…</p></Shell>;
   if (!user)
     return (
@@ -52,59 +53,82 @@ function AdminPage() {
     );
   if (!isStaff) return <Shell><p className="text-muted-foreground">Your account doesn't have staff access.</p></Shell>;
 
-  const navItems = [
-    { value: "overview", label: "Overview", icon: BarChart3, group: "Workspace" },
-    { value: "bookings", label: "Bookings", icon: ListChecks, group: "Operations" },
-    { value: "properties", label: "Properties", icon: Home, group: "Operations" },
-    { value: "calendar", label: "Availability", icon: CalendarDays, group: "Operations" },
-    { value: "pricing", label: "Pricing", icon: Percent, group: "Revenue" },
-    { value: "payments", label: "Payments", icon: CreditCard, group: "Revenue" },
-    { value: "discounts", label: "Discounts", icon: Tags, group: "Revenue" },
-    { value: "amenities", label: "Amenities", icon: Settings2, group: "Content" },
-    { value: "reviews", label: "Reviews", icon: Star, group: "Content" },
-  ] as const;
+  const allNavItems: {
+    value: string;
+    label: string;
+    icon: typeof BarChart3;
+    group: string;
+    permission: AdminPermission;
+    superAdminOnly?: boolean;
+  }[] = [
+    { value: "overview", label: "Overview", icon: BarChart3, group: "Workspace", permission: "view_dashboard" },
+    { value: "bookings", label: "Bookings", icon: ListChecks, group: "Operations", permission: "manage_bookings" },
+    { value: "properties", label: "Properties", icon: Home, group: "Operations", permission: "manage_properties" },
+    { value: "calendar", label: "Availability", icon: CalendarDays, group: "Operations", permission: "manage_availability" },
+    { value: "pricing", label: "Pricing", icon: Percent, group: "Revenue", permission: "manage_pricing" },
+    { value: "payments", label: "Payments", icon: CreditCard, group: "Revenue", permission: "manage_payments" },
+    { value: "discounts", label: "Discounts", icon: Tags, group: "Revenue", permission: "manage_discounts" },
+    { value: "amenities", label: "Amenities", icon: Settings2, group: "Content", permission: "manage_amenities" },
+    { value: "reviews", label: "Reviews", icon: Star, group: "Content", permission: "manage_reviews" },
+    { value: "users", label: "Users & Roles", icon: ShieldCheck, group: "Access", permission: "manage_users", superAdminOnly: true },
+  ];
+
+  const navItems = allNavItems.filter(
+    (item) => can(item.permission) && (!item.superAdminOnly || isSuperAdmin),
+  );
+  const defaultTab = navItems[0]?.value ?? "overview";
 
   return (
     <Shell>
-      <Tabs defaultValue="overview" className="grid gap-5 lg:grid-cols-[240px_minmax(0,1fr)] lg:items-start">
-        <aside className="lg:sticky lg:top-24">
-          <TabsList className="flex h-auto w-full gap-1 overflow-x-auto rounded-2xl border border-border bg-card p-2 shadow-sm lg:flex-col lg:items-stretch lg:overflow-visible lg:rounded-3xl lg:p-3">
-            {navItems.map((item, index) => {
-              const Icon = item.icon;
-              const previous = navItems[index - 1];
-              const showGroup = index === 0 || previous.group !== item.group;
-              return (
-                <div key={item.value} className="contents lg:block">
-                  {showGroup && (
-                    <p className="hidden px-3 pb-1 pt-3 text-[10px] font-bold uppercase tracking-[0.16em] text-muted-foreground first:pt-1 lg:block">
-                      {item.group}
-                    </p>
-                  )}
-                  <TabsTrigger
-                    value={item.value}
-                    className="shrink-0 justify-start gap-2 rounded-xl px-3 py-2.5 data-[state=active]:bg-ink data-[state=active]:text-white lg:w-full"
-                  >
-                    <Icon className="size-4" />
-                    {item.label}
-                  </TabsTrigger>
-                </div>
-              );
-            })}
-          </TabsList>
-        </aside>
-
-        <div className="min-w-0">
-          <TabsContent value="overview" className="mt-0"><Overview /></TabsContent>
-          <TabsContent value="bookings" className="mt-0"><Bookings /></TabsContent>
-          <TabsContent value="properties" className="mt-0"><Properties /></TabsContent>
-          <TabsContent value="pricing" className="mt-0"><PricingRules /></TabsContent>
-          <TabsContent value="amenities" className="mt-0"><PropertyAmenities /></TabsContent>
-          <TabsContent value="calendar" className="mt-0"><Blocked /></TabsContent>
-          <TabsContent value="payments" className="mt-0"><Payments /></TabsContent>
-          <TabsContent value="reviews" className="mt-0"><Reviews /></TabsContent>
-          <TabsContent value="discounts" className="mt-0"><Discounts /></TabsContent>
+      {navItems.length === 0 ? (
+        <div className="rounded-3xl border border-border bg-card p-6 shadow-sm">
+          <h2 className="font-display text-xl font-bold text-ink">No admin permissions assigned</h2>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Ask a Super Admin to assign the areas you should be able to manage.
+          </p>
         </div>
-      </Tabs>
+      ) : (
+        <Tabs defaultValue={defaultTab} className="grid gap-5 lg:grid-cols-[240px_minmax(0,1fr)] lg:items-start">
+          <aside className="lg:sticky lg:top-24">
+            <TabsList className="flex h-auto w-full gap-1 overflow-x-auto rounded-2xl border border-border bg-card p-2 shadow-sm lg:flex-col lg:items-stretch lg:overflow-visible lg:rounded-3xl lg:p-3">
+              {navItems.map((item, index) => {
+                const Icon = item.icon;
+                const previous = navItems[index - 1];
+                const showGroup = index === 0 || previous.group !== item.group;
+                return (
+                  <div key={item.value} className="contents lg:block">
+                    {showGroup && (
+                      <p className="hidden px-3 pb-1 pt-3 text-[10px] font-bold uppercase tracking-[0.16em] text-muted-foreground first:pt-1 lg:block">
+                        {item.group}
+                      </p>
+                    )}
+                    <TabsTrigger
+                      value={item.value}
+                      className="shrink-0 justify-start gap-2 rounded-xl px-3 py-2.5 data-[state=active]:bg-ink data-[state=active]:text-white lg:w-full"
+                    >
+                      <Icon className="size-4" />
+                      {item.label}
+                    </TabsTrigger>
+                  </div>
+                );
+              })}
+            </TabsList>
+          </aside>
+
+          <div className="min-w-0">
+            {can("view_dashboard") && <TabsContent value="overview" className="mt-0"><Overview /></TabsContent>}
+            {can("manage_bookings") && <TabsContent value="bookings" className="mt-0"><Bookings /></TabsContent>}
+            {can("manage_properties") && <TabsContent value="properties" className="mt-0"><Properties /></TabsContent>}
+            {can("manage_pricing") && <TabsContent value="pricing" className="mt-0"><PricingRules /></TabsContent>}
+            {can("manage_amenities") && <TabsContent value="amenities" className="mt-0"><PropertyAmenities /></TabsContent>}
+            {can("manage_availability") && <TabsContent value="calendar" className="mt-0"><Blocked /></TabsContent>}
+            {can("manage_payments") && <TabsContent value="payments" className="mt-0"><Payments /></TabsContent>}
+            {can("manage_reviews") && <TabsContent value="reviews" className="mt-0"><Reviews /></TabsContent>}
+            {can("manage_discounts") && <TabsContent value="discounts" className="mt-0"><Discounts /></TabsContent>}
+            {isSuperAdmin && can("manage_users") && <TabsContent value="users" className="mt-0"><UserAccess /></TabsContent>}
+          </div>
+        </Tabs>
+      )}
     </Shell>
   );
 }
