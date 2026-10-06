@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { BarChart3, BedDouble, CalendarDays, CreditCard, Home, ListChecks, Percent, Settings2, Star, Tags } from "lucide-react";
+import { BarChart3, BedDouble, CalendarDays, CreditCard, Home, ListChecks, Percent, Settings2, Star, Tags, Users } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useStaff } from "@/hooks/use-staff";
@@ -14,9 +14,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { formatDate, formatNaira } from "@/lib/format";
 import { Discounts, Payments, PricingRules, PropertyAmenities, Reviews } from "@/components/admin/extra-tabs";
 import type { Database } from "@/integrations/supabase/types";
+import { listAdminUsers, setAdminUserRole } from "@/lib/admin.functions";
 
 type BookingStatus = Database["public"]["Enums"]["booking_status"];
 type PropertyStatus = Database["public"]["Enums"]["property_status"];
+type AppRole = Database["public"]["Enums"]["app_role"];
 const BOOKING_STATUSES: BookingStatus[] = ["pending", "confirmed", "partially_paid", "fully_paid", "completed", "cancelled", "refunded"];
 const PROPERTY_STATUSES: PropertyStatus[] = ["active", "inactive", "draft", "maintenance"];
 const DEFAULT_PROPERTY_CONTACT = {
@@ -62,6 +64,7 @@ function AdminPage() {
     { value: "discounts", label: "Discounts", icon: Tags, group: "Revenue" },
     { value: "amenities", label: "Amenities", icon: Settings2, group: "Content" },
     { value: "reviews", label: "Reviews", icon: Star, group: "Content" },
+    { value: "users", label: "User roles", icon: Users, group: "Access" },
   ] as const;
 
   return (
@@ -103,6 +106,7 @@ function AdminPage() {
           <TabsContent value="payments" className="mt-0"><Payments /></TabsContent>
           <TabsContent value="reviews" className="mt-0"><Reviews /></TabsContent>
           <TabsContent value="discounts" className="mt-0"><Discounts /></TabsContent>
+          <TabsContent value="users" className="mt-0"><UserRoles /></TabsContent>
         </div>
       </Tabs>
     </Shell>
@@ -188,7 +192,11 @@ function Overview() {
   const q = useQuery({
     queryKey: ["admin-overview"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("bookings").select("reference,guest_name,status,total_amount,check_in,created_at,properties(name)").order("created_at", { ascending: false }).limit(100);
+      const { data, error } = await supabase
+        .from("bookings")
+        .select("reference,guest_name,status,total_amount,amount_due_now,balance_amount,balance_due_date,check_in,check_out,created_at,properties(name)")
+        .order("created_at", { ascending: false })
+        .limit(200);
       if (error) throw error;
       return data;
     },
@@ -197,36 +205,97 @@ function Overview() {
   const rows = q.data ?? [];
   const live = rows.filter((b) => !["cancelled", "refunded"].includes(b.status));
   const today = new Date().toISOString().slice(0, 10);
+  const occupied = live.filter((b) => b.check_in <= today && b.check_out > today);
+  const arrivalsToday = live.filter((b) => b.check_in === today);
+  const departuresToday = live.filter((b) => b.check_out === today);
+  const outstanding = live.reduce((sum, b) => sum + Number(b.balance_amount ?? 0), 0);
+  const overdueBalances = live.filter((b) => Number(b.balance_amount ?? 0) > 0 && b.balance_due_date && b.balance_due_date <= today);
+
   const stats = [
-    { label: "Live properties", value: String((props.data ?? []).filter((p) => p.status === "active").length) },
-    { label: "Pending bookings", value: String(rows.filter((b) => b.status === "pending").length) },
-    { label: "Upcoming check-ins", value: String(live.filter((b) => b.check_in >= today).length) },
-    { label: "Booked value", value: formatNaira(live.reduce((s, b) => s + Number(b.total_amount), 0)) },
+    { label: "Occupied now", value: String(occupied.length), hint: `${(props.data ?? []).filter((p) => p.status === "active").length} live properties` },
+    { label: "Arrivals today", value: String(arrivalsToday.length), hint: `${departuresToday.length} departures today` },
+    { label: "Pending bookings", value: String(rows.filter((b) => b.status === "pending").length), hint: "Reservations awaiting action" },
+    { label: "Outstanding balance", value: formatNaira(outstanding), hint: `${overdueBalances.length} balance${overdueBalances.length === 1 ? "" : "s"} due` },
   ];
+
+  const attention = [
+    ...rows.filter((b) => b.status === "pending").slice(0, 3).map((b) => ({
+      key: `pending-${b.reference}`,
+      title: `Confirm ${b.reference}`,
+      detail: `${b.guest_name} · ${b.properties?.name ?? "Property"}`,
+    })),
+    ...overdueBalances.slice(0, 3).map((b) => ({
+      key: `balance-${b.reference}`,
+      title: `Balance due · ${formatNaira(Number(b.balance_amount ?? 0))}`,
+      detail: `${b.guest_name} · ${b.reference}`,
+    })),
+  ].slice(0, 5);
+
   return (
     <div className="mt-6 space-y-6">
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {stats.map((s) => (
-          <div key={s.label} className={card}>
-            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{s.label}</p>
-            <p className="mt-3 font-display text-3xl font-bold text-ink">{q.isLoading || props.isLoading ? "…" : s.value}</p>
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {stats.map((stat) => (
+          <div key={stat.label} className={card}>
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{stat.label}</p>
+            <p className="mt-3 font-display text-3xl font-bold text-ink">{q.isLoading || props.isLoading ? "…" : stat.value}</p>
+            <p className="mt-1 text-xs text-muted-foreground">{stat.hint}</p>
           </div>
         ))}
       </div>
-      {(rows.length > 0) && (
+
+      <div className="grid gap-4 xl:grid-cols-[1.35fr_0.65fr]">
         <div className={card}>
           <div className="flex items-center justify-between gap-3">
             <div>
-              <h3 className="font-display text-xl font-bold text-ink">Recent bookings</h3>
-              <p className="mt-1 text-sm text-muted-foreground">The latest reservation activity across your properties.</p>
+              <h3 className="font-display text-xl font-bold text-ink">Today’s operations</h3>
+              <p className="mt-1 text-sm text-muted-foreground">Arrivals, departures and currently occupied stays.</p>
             </div>
           </div>
+          <div className="mt-5 grid gap-3 sm:grid-cols-3">
+            <div className="rounded-2xl bg-secondary/70 p-4"><p className="text-xs text-muted-foreground">Currently occupied</p><p className="mt-1 text-2xl font-bold text-ink">{occupied.length}</p></div>
+            <div className="rounded-2xl bg-secondary/70 p-4"><p className="text-xs text-muted-foreground">Checking in</p><p className="mt-1 text-2xl font-bold text-ink">{arrivalsToday.length}</p></div>
+            <div className="rounded-2xl bg-secondary/70 p-4"><p className="text-xs text-muted-foreground">Checking out</p><p className="mt-1 text-2xl font-bold text-ink">{departuresToday.length}</p></div>
+          </div>
+          {(arrivalsToday.length > 0 || departuresToday.length > 0) && (
+            <div className="mt-4 divide-y divide-border">
+              {[...arrivalsToday.map((b) => ({ ...b, movement: "Arrival" })), ...departuresToday.map((b) => ({ ...b, movement: "Departure" }))].map((b) => (
+                <div key={`${b.movement}-${b.reference}`} className="flex flex-wrap items-center justify-between gap-2 py-3">
+                  <div>
+                    <p className="text-sm font-semibold text-ink">{b.guest_name} · {b.properties?.name ?? "Property"}</p>
+                    <p className="text-xs text-muted-foreground">{b.reference}</p>
+                  </div>
+                  <Badge variant="secondary">{b.movement}</Badge>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="rounded-3xl bg-ink p-6 text-white shadow-sm">
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-white/60">Needs attention</p>
+          <h3 className="mt-2 font-display text-xl font-bold">Action queue</h3>
+          <div className="mt-4 space-y-3">
+            {attention.map((item) => (
+              <div key={item.key} className="rounded-2xl bg-white/10 p-3">
+                <p className="text-sm font-semibold">{item.title}</p>
+                <p className="mt-1 text-xs text-white/65">{item.detail}</p>
+              </div>
+            ))}
+            {!q.isLoading && attention.length === 0 && <p className="text-sm text-white/70">Nothing urgent right now.</p>}
+          </div>
+        </div>
+      </div>
+
+      {(rows.length > 0) && (
+        <div className={card}>
+          <h3 className="font-display text-xl font-bold text-ink">Recent bookings</h3>
+          <p className="mt-1 text-sm text-muted-foreground">Latest reservation activity across your properties.</p>
           <div className="mt-4 divide-y divide-border">
-            {rows.slice(0, 5).map((b) => (
+            {rows.slice(0, 6).map((b) => (
               <div key={b.reference} className="flex flex-col gap-2 py-3 first:pt-0 last:pb-0 sm:flex-row sm:items-center sm:justify-between">
                 <div className="min-w-0">
                   <p className="truncate text-sm font-semibold text-ink">{b.guest_name} · {b.properties?.name ?? "Property"}</p>
-                  <p className="mt-0.5 text-xs text-muted-foreground">{b.reference} · check-in {formatDate(b.check_in)}</p>
+                  <p className="mt-0.5 text-xs text-muted-foreground">{b.reference} · {formatDate(b.check_in)} → {formatDate(b.check_out)}</p>
                 </div>
                 <div className="flex items-center gap-2">
                   <Badge variant="secondary" className="capitalize">{b.status.replace("_", " ")}</Badge>
@@ -237,40 +306,31 @@ function Overview() {
           </div>
         </div>
       )}
-      <div className="grid gap-4 lg:grid-cols-[1.3fr_0.7fr]">
-        <div className={card}>
-          <h3 className="font-display text-xl font-bold text-ink">Operations snapshot</h3>
-          <p className="mt-1 text-sm text-muted-foreground">Monitor your live listings and guest activity, then use the tabs above to manage each area.</p>
-          <div className="mt-5 grid gap-3 sm:grid-cols-3">
-            <div className="rounded-2xl bg-secondary/70 p-4"><p className="text-xs text-muted-foreground">All bookings</p><p className="mt-1 text-2xl font-bold text-ink">{rows.length}</p></div>
-            <div className="rounded-2xl bg-secondary/70 p-4"><p className="text-xs text-muted-foreground">Active listings</p><p className="mt-1 text-2xl font-bold text-ink">{(props.data ?? []).filter((p) => p.status === "active").length}</p></div>
-            <div className="rounded-2xl bg-secondary/70 p-4"><p className="text-xs text-muted-foreground">Featured listings</p><p className="mt-1 text-2xl font-bold text-ink">{(props.data ?? []).filter((p) => p.featured).length}</p></div>
-          </div>
-        </div>
-        <div className="rounded-3xl bg-ink p-6 text-white shadow-sm">
-          <p className="text-xs font-bold uppercase tracking-[0.18em] text-white/60">Needs attention</p>
-          <h3 className="mt-2 font-display text-xl font-bold">Listing readiness</h3>
-          <div className="mt-4 space-y-3">
-            {(props.data ?? [])
-              .map((p) => ({ p, readiness: propertyReadiness(p) }))
-              .filter(({ readiness }) => readiness.percent < 100)
-              .sort((a, b) => a.readiness.percent - b.readiness.percent)
-              .slice(0, 3)
-              .map(({ p, readiness }) => (
-                <div key={p.id}>
-                  <div className="flex items-center justify-between gap-3 text-sm">
-                    <span className="truncate font-semibold">{p.name}</span>
-                    <span className="text-white/70">{readiness.percent}%</span>
-                  </div>
-                  <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-white/15">
-                    <div className="h-full rounded-full bg-white" style={{ width: `${readiness.percent}%` }} />
-                  </div>
+
+      <div className={card}>
+        <h3 className="font-display text-xl font-bold text-ink">Listing readiness</h3>
+        <p className="mt-1 text-sm text-muted-foreground">Properties missing information that guests or operations depend on.</p>
+        <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+          {(props.data ?? [])
+            .map((p) => ({ p, readiness: propertyReadiness(p) }))
+            .filter(({ readiness }) => readiness.percent < 100)
+            .sort((a, b) => a.readiness.percent - b.readiness.percent)
+            .slice(0, 6)
+            .map(({ p, readiness }) => (
+              <div key={p.id} className="rounded-2xl border border-border bg-background p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="truncate text-sm font-semibold text-ink">{p.name}</span>
+                  <span className="text-xs text-muted-foreground">{readiness.percent}%</span>
                 </div>
-              ))}
-            {!props.isLoading && (props.data ?? []).every((p) => propertyReadiness(p).percent === 100) && (
-              <p className="text-sm text-white/70">All listings have the essentials in place.</p>
-            )}
-          </div>
+                <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-secondary">
+                  <div className="h-full rounded-full bg-brand" style={{ width: `${readiness.percent}%` }} />
+                </div>
+                <p className="mt-2 text-xs leading-5 text-muted-foreground">{readiness.missing.slice(0, 3).join(" · ")}</p>
+              </div>
+            ))}
+          {!props.isLoading && (props.data ?? []).every((p) => propertyReadiness(p).percent === 100) && (
+            <p className="text-sm text-muted-foreground">All listings have the essentials in place.</p>
+          )}
         </div>
       </div>
     </div>
@@ -349,17 +409,22 @@ function Properties() {
   const [search, setSearch] = useState("");
   const save = useMutation({
     mutationFn: async ({ id, values }: { id: string | null; values: PropertyFormValues }) => {
-      const { name, slug, city, state, address, property_type, description, bedrooms, bathrooms, max_guests, base_price, cleaning_fee, min_nights, house_rules, cancellation_policy, phone, whatsapp, email, amenity_ids } = values;
+      const { name, slug, city, state, address, country, property_type, description, bedrooms, bathrooms, max_guests, base_price, cleaning_fee, service_fee_percent, security_deposit, included_guests, extra_guest_fee, min_nights, deposit_required, deposit_percent, deposit_fixed, balance_due_days, check_in_time, check_out_time, house_rules, cancellation_policy, phone, whatsapp, email, airbnb_listing_url, amenity_ids } = values;
       const fields = {
         name: name.trim(), slug: slug.trim(), city: city.trim(), state: state.trim() || null,
         address: address.trim() || null, property_type: property_type.trim() || "Apartment",
         description: description.trim() || null, bedrooms: Number(bedrooms), bathrooms: Number(bathrooms),
         max_guests: Number(max_guests), base_price: Number(base_price), cleaning_fee: Number(cleaning_fee),
-        min_nights: Number(min_nights), house_rules: house_rules.trim() || null,
+        country: country.trim() || "Nigeria", service_fee_percent: Number(service_fee_percent), security_deposit: Number(security_deposit),
+        included_guests: Number(included_guests), extra_guest_fee: Number(extra_guest_fee), min_nights: Number(min_nights),
+        deposit_required: deposit_required === "yes", deposit_percent: Number(deposit_percent), deposit_fixed: deposit_fixed.trim() ? Number(deposit_fixed) : null,
+        balance_due_days: Number(balance_due_days), check_in_time: check_in_time.trim() || "15:00", check_out_time: check_out_time.trim() || "11:00",
+        house_rules: house_rules.trim() || null,
         cancellation_policy: cancellation_policy.trim() || null,
         phone: phone.trim() || null,
         whatsapp: whatsapp.trim() || null,
         email: email.trim().toLowerCase() || null,
+        airbnb_listing_url: airbnb_listing_url.trim() || null,
       };
       let propertyId = id;
       if (id) {
@@ -449,10 +514,12 @@ function Properties() {
 }
 
 type PropertyFormValues = {
-  name: string; slug: string; city: string; state: string; address: string; property_type: string;
+  name: string; slug: string; city: string; state: string; address: string; country: string; property_type: string;
   description: string; bedrooms: string; bathrooms: string; max_guests: string; base_price: string;
-  cleaning_fee: string; min_nights: string; house_rules: string; cancellation_policy: string;
-  phone: string; whatsapp: string; email: string; amenity_ids: string[];
+  cleaning_fee: string; service_fee_percent: string; security_deposit: string; included_guests: string; extra_guest_fee: string;
+  min_nights: string; deposit_required: "yes" | "no"; deposit_percent: string; deposit_fixed: string; balance_due_days: string;
+  check_in_time: string; check_out_time: string; house_rules: string; cancellation_policy: string;
+  phone: string; whatsapp: string; email: string; airbnb_listing_url: string; amenity_ids: string[];
 };
 
 function PropertyEditor({ property, onCancel, onSave, saving }: {
@@ -463,13 +530,17 @@ function PropertyEditor({ property, onCancel, onSave, saving }: {
 }) {
   const [values, setValues] = useState<PropertyFormValues>({
     name: property?.name ?? "", slug: property?.slug ?? "", city: property?.city ?? "", state: property?.state ?? "",
-    address: property?.address ?? "", property_type: property?.property_type ?? "Apartment", description: property?.description ?? "",
+    address: property?.address ?? "", country: property?.country ?? "Nigeria", property_type: property?.property_type ?? "Apartment", description: property?.description ?? "",
     bedrooms: String(property?.bedrooms ?? 1), bathrooms: String(property?.bathrooms ?? 1), max_guests: String(property?.max_guests ?? 2),
-    base_price: String(property?.base_price ?? 0), cleaning_fee: String(property?.cleaning_fee ?? 0), min_nights: String(property?.min_nights ?? 1),
+    base_price: String(property?.base_price ?? 0), cleaning_fee: String(property?.cleaning_fee ?? 0), service_fee_percent: String(property?.service_fee_percent ?? 0),
+    security_deposit: String(property?.security_deposit ?? 0), included_guests: String(property?.included_guests ?? 2), extra_guest_fee: String(property?.extra_guest_fee ?? 0), min_nights: String(property?.min_nights ?? 1),
+    deposit_required: property?.deposit_required ? "yes" : "no", deposit_percent: String(property?.deposit_percent ?? 0), deposit_fixed: property?.deposit_fixed == null ? "" : String(property.deposit_fixed),
+    balance_due_days: String(property?.balance_due_days ?? 7), check_in_time: property?.check_in_time ?? "15:00", check_out_time: property?.check_out_time ?? "11:00",
     house_rules: property?.house_rules ?? "", cancellation_policy: property?.cancellation_policy ?? "",
     phone: property?.phone ?? DEFAULT_PROPERTY_CONTACT.phone,
     whatsapp: property?.whatsapp ?? DEFAULT_PROPERTY_CONTACT.whatsapp,
     email: property?.email ?? DEFAULT_PROPERTY_CONTACT.email,
+    airbnb_listing_url: property?.airbnb_listing_url ?? "",
     amenity_ids: property?.property_amenities?.map((item) => item.amenity_id) ?? [],
   });
   const field = (name: Exclude<keyof PropertyFormValues, "amenity_ids">, value: string) => setValues((current) => ({ ...current, [name]: value }));
@@ -508,13 +579,35 @@ function PropertyEditor({ property, onCancel, onSave, saving }: {
         <FormField label="URL name"><Input value={values.slug} onChange={(e) => field("slug", e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "-"))} /></FormField>
         <FormField label="City"><Input value={values.city} onChange={(e) => field("city", e.target.value)} /></FormField>
         <FormField label="State / region"><Input value={values.state} onChange={(e) => field("state", e.target.value)} /></FormField>
+        <FormField label="Country"><Input value={values.country} onChange={(e) => field("country", e.target.value)} /></FormField>
         <FormField label="Property type"><Input value={values.property_type} onChange={(e) => field("property_type", e.target.value)} /></FormField>
         <FormField label="Bedrooms"><Input type="number" min="0" value={values.bedrooms} onChange={(e) => field("bedrooms", e.target.value)} /></FormField>
         <FormField label="Bathrooms"><Input type="number" min="0" value={values.bathrooms} onChange={(e) => field("bathrooms", e.target.value)} /></FormField>
         <FormField label="Maximum guests"><Input type="number" min="1" value={values.max_guests} onChange={(e) => field("max_guests", e.target.value)} /></FormField>
         <FormField label="Nightly price (₦)"><Input type="number" min="0" value={values.base_price} onChange={(e) => field("base_price", e.target.value)} /></FormField>
         <FormField label="Cleaning fee (₦)"><Input type="number" min="0" value={values.cleaning_fee} onChange={(e) => field("cleaning_fee", e.target.value)} /></FormField>
+        <FormField label="Service fee (%)"><Input type="number" min="0" value={values.service_fee_percent} onChange={(e) => field("service_fee_percent", e.target.value)} /></FormField>
+        <FormField label="Security deposit (₦)"><Input type="number" min="0" value={values.security_deposit} onChange={(e) => field("security_deposit", e.target.value)} /></FormField>
+        <FormField label="Included guests"><Input type="number" min="1" value={values.included_guests} onChange={(e) => field("included_guests", e.target.value)} /></FormField>
+        <FormField label="Extra guest fee / night (₦)"><Input type="number" min="0" value={values.extra_guest_fee} onChange={(e) => field("extra_guest_fee", e.target.value)} /></FormField>
         <FormField label="Minimum nights"><Input type="number" min="1" value={values.min_nights} onChange={(e) => field("min_nights", e.target.value)} /></FormField>
+        <FormField label="Check-in time"><Input type="time" value={values.check_in_time} onChange={(e) => field("check_in_time", e.target.value)} /></FormField>
+        <FormField label="Check-out time"><Input type="time" value={values.check_out_time} onChange={(e) => field("check_out_time", e.target.value)} /></FormField>
+        </div>
+      </div>
+      <div className="rounded-2xl border border-border bg-background p-4 sm:p-5">
+        <p className="text-sm font-semibold text-ink">Payment & deposit rules</p>
+        <p className="mt-1 text-xs leading-5 text-muted-foreground">Control whether guests can pay a deposit and when the remaining balance becomes due.</p>
+        <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <FormField label="Deposit option">
+            <Select value={values.deposit_required} onValueChange={(value) => field("deposit_required", value)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent><SelectItem value="no">Full payment only</SelectItem><SelectItem value="yes">Allow deposit</SelectItem></SelectContent>
+            </Select>
+          </FormField>
+          <FormField label="Deposit percent"><Input type="number" min="0" max="100" value={values.deposit_percent} onChange={(e) => field("deposit_percent", e.target.value)} /></FormField>
+          <FormField label="Fixed deposit (₦, optional)"><Input type="number" min="0" value={values.deposit_fixed} onChange={(e) => field("deposit_fixed", e.target.value)} /></FormField>
+          <FormField label="Balance due before arrival (days)"><Input type="number" min="0" value={values.balance_due_days} onChange={(e) => field("balance_due_days", e.target.value)} /></FormField>
         </div>
       </div>
       <div>
@@ -570,6 +663,9 @@ function PropertyEditor({ property, onCancel, onSave, saving }: {
           </FormField>
           <FormField label="Enquiries email">
             <Input type="email" placeholder="hello@example.com" value={values.email} onChange={(e) => field("email", e.target.value)} />
+          </FormField>
+          <FormField label="Airbnb listing URL">
+            <Input type="url" placeholder="https://airbnb.com/rooms/…" value={values.airbnb_listing_url} onChange={(e) => field("airbnb_listing_url", e.target.value)} />
           </FormField>
         </div>
       </div>
@@ -788,6 +884,83 @@ function PropertyRow({
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+function UserRoles() {
+  const qc = useQueryClient();
+  const session = useQuery({
+    queryKey: ["admin-session-token"],
+    queryFn: async () => {
+      const { data, error } = await supabase.auth.getSession();
+      if (error) throw error;
+      return data.session?.access_token ?? null;
+    },
+  });
+  const users = useQuery({
+    queryKey: ["admin-users", session.data],
+    enabled: Boolean(session.data),
+    queryFn: () => listAdminUsers({ data: { accessToken: session.data! } }),
+    retry: false,
+  });
+  const updateRole = useMutation({
+    mutationFn: ({ userId, role }: { userId: string; role: AppRole }) => {
+      if (!session.data) throw new Error("Please sign in again.");
+      return setAdminUserRole({ data: { accessToken: session.data, userId, role } });
+    },
+    onSuccess: async () => {
+      toast.success("User role updated");
+      await qc.invalidateQueries({ queryKey: ["admin-users"] });
+    },
+    onError: (error) => toast.error(error instanceof Error ? error.message : "Role update failed"),
+  });
+
+  return (
+    <div className="mt-6">
+      <SectionIntro
+        eyebrow="Access control"
+        title="User roles"
+        description="Super admins can assign staff access or property manager access to registered users."
+      />
+      {users.isError ? (
+        <div className={card}>
+          <p className="font-semibold text-ink">Super admin access required</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Only super admins can view users or change roles. Property managers can use the operational areas of the dashboard but cannot grant access.
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {users.isLoading && <div className={card}><p className="text-sm text-muted-foreground">Loading users…</p></div>}
+          {(users.data ?? []).map((account) => (
+            <div key={account.id} className={`${card} flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between`}>
+              <div className="min-w-0">
+                <p className="truncate font-semibold text-ink">{account.email}</p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Joined {formatDate(account.createdAt.slice(0, 10))}
+                  {account.lastSignInAt ? ` · Last active ${formatDate(account.lastSignInAt.slice(0, 10))}` : ""}
+                </p>
+              </div>
+              <Select
+                value={account.role}
+                disabled={updateRole.isPending}
+                onValueChange={(value) => updateRole.mutate({ userId: account.id, role: value as AppRole })}
+              >
+                <SelectTrigger className="w-full capitalize sm:w-48"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="super_admin">Super admin</SelectItem>
+                  <SelectItem value="property_manager">Property manager</SelectItem>
+                  <SelectItem value="guest">Guest</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          ))}
+          {!users.isLoading && !users.isError && (users.data ?? []).length === 0 && (
+            <div className={card}><p className="text-sm text-muted-foreground">No registered users yet.</p></div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
