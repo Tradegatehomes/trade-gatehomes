@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { MailPlus, ShieldCheck, UserCog } from "lucide-react";
+import { MailPlus, RefreshCw, ShieldCheck, Trash2, UserCog } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -141,6 +141,45 @@ export function UserAccess() {
     },
     onError: (error) =>
       toast.error(error instanceof Error ? error.message : "Could not add admin"),
+  });
+
+  const resendInviteMutation = useMutation({
+    mutationFn: async (invite: { email: string; role: AdminRole }) => {
+      const { data, error } = await db.rpc("invite_admin_by_email", {
+        p_email: invite.email,
+        p_role: invite.role,
+      });
+      if (error) throw error;
+
+      const { error: emailError } = await supabase.auth.signInWithOtp({
+        email: invite.email,
+        options: { emailRedirectTo: window.location.origin + "/admin" },
+      });
+      if (emailError) throw emailError;
+
+      return data;
+    },
+    onSuccess: () => {
+      toast.success("Invitation resent");
+      qc.invalidateQueries({ queryKey: ["admin-user-access"] });
+    },
+    onError: (error) =>
+      toast.error(error instanceof Error ? error.message : "Could not resend invitation"),
+  });
+
+  const cancelInviteMutation = useMutation({
+    mutationFn: async (inviteId: string) => {
+      const { error } = await db.rpc("cancel_admin_invite", {
+        p_invite_id: inviteId,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Pending invitation cancelled");
+      qc.invalidateQueries({ queryKey: ["admin-user-access"] });
+    },
+    onError: (error) =>
+      toast.error(error instanceof Error ? error.message : "Could not cancel invitation"),
   });
 
   const saveMutation = useMutation({
@@ -300,7 +339,35 @@ export function UserAccess() {
                     Invited as {roleLabels[invite.role] ?? invite.role} · expires {new Date(invite.expires_at).toLocaleDateString()}
                   </p>
                 </div>
-                <Badge variant="outline" className="w-fit rounded-full">Pending Invite</Badge>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge variant="outline" className="w-fit rounded-full">Pending Invite</Badge>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="rounded-full"
+                    disabled={resendInviteMutation.isPending || cancelInviteMutation.isPending}
+                    onClick={() => resendInviteMutation.mutate({ email: invite.email, role: invite.role })}
+                  >
+                    <RefreshCw className="mr-1 size-3.5" />
+                    Resend
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    className="rounded-full text-destructive hover:text-destructive"
+                    disabled={resendInviteMutation.isPending || cancelInviteMutation.isPending}
+                    onClick={() => {
+                      if (window.confirm(`Cancel the pending invitation for ${invite.email}?`)) {
+                        cancelInviteMutation.mutate(invite.id);
+                      }
+                    }}
+                  >
+                    <Trash2 className="mr-1 size-3.5" />
+                    Cancel
+                  </Button>
+                </div>
               </div>
             ))}
           </div>
