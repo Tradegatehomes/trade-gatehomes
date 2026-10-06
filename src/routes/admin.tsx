@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { BarChart3, BedDouble, CalendarDays, CreditCard, Home, ListChecks, Percent, Settings2, ShieldCheck, Star, Tags } from "lucide-react";
+import { BarChart3, BedDouble, CalendarDays, CreditCard, Home, KeyRound, ListChecks, Percent, Settings2, ShieldCheck, Star, Tags } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminAccess, type AdminPermission } from "@/hooks/use-admin-access";
@@ -58,7 +58,7 @@ function AdminPage() {
     label: string;
     icon: typeof BarChart3;
     group: string;
-    permission: AdminPermission;
+    permission?: AdminPermission;
     superAdminOnly?: boolean;
   }[] = [
     { value: "overview", label: "Overview", icon: BarChart3, group: "Workspace", permission: "view_dashboard" },
@@ -71,10 +71,11 @@ function AdminPage() {
     { value: "amenities", label: "Amenities", icon: Settings2, group: "Content", permission: "manage_amenities" },
     { value: "reviews", label: "Reviews", icon: Star, group: "Content", permission: "manage_reviews" },
     { value: "users", label: "Users & Roles", icon: ShieldCheck, group: "Access", permission: "manage_users", superAdminOnly: true },
+    { value: "settings", label: "Settings", icon: KeyRound, group: "Account" },
   ];
 
   const navItems = allNavItems.filter(
-    (item) => can(item.permission) && (!item.superAdminOnly || isSuperAdmin),
+    (item) => (!item.permission || can(item.permission)) && (!item.superAdminOnly || isSuperAdmin),
   );
   const defaultTab = navItems[0]?.value ?? "overview";
 
@@ -126,10 +127,133 @@ function AdminPage() {
             {can("manage_reviews") && <TabsContent value="reviews" className="mt-0"><Reviews /></TabsContent>}
             {can("manage_discounts") && <TabsContent value="discounts" className="mt-0"><Discounts /></TabsContent>}
             {isSuperAdmin && can("manage_users") && <TabsContent value="users" className="mt-0"><UserAccess /></TabsContent>}
+            <TabsContent value="settings" className="mt-0"><AdminSettings /></TabsContent>
           </div>
         </Tabs>
       )}
     </Shell>
+  );
+}
+
+function AdminSettings() {
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  async function changePassword(event: React.FormEvent) {
+    event.preventDefault();
+
+    if (newPassword.length < 6) {
+      toast.error("New password must be at least 6 characters.");
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      toast.error("New passwords do not match.");
+      return;
+    }
+
+    if (currentPassword && currentPassword === newPassword) {
+      toast.error("Choose a new password that is different from your current password.");
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const payload = currentPassword
+        ? { password: newPassword, currentPassword }
+        : { password: newPassword };
+      const { error } = await supabase.auth.updateUser(payload as any);
+      if (error) throw error;
+
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+      toast.success("Password changed successfully.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not change password");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="mt-6">
+      <SectionIntro
+        eyebrow="Account"
+        title="Settings"
+        description="Manage your own admin account security."
+      />
+      <div className="max-w-2xl rounded-3xl border border-border/80 bg-card p-5 shadow-sm sm:p-6">
+        <div className="flex items-start gap-3">
+          <span className="grid size-10 shrink-0 place-items-center rounded-2xl bg-brand/10 text-brand">
+            <KeyRound className="size-5" />
+          </span>
+          <div>
+            <h3 className="font-display text-xl font-bold text-ink">Change password</h3>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Update the password for the account you are currently signed in with.
+            </p>
+          </div>
+        </div>
+
+        <form onSubmit={changePassword} className="mt-6 space-y-4">
+          <div className="space-y-1.5">
+            <label htmlFor="admin-current-password" className="text-sm font-medium text-ink">
+              Current password
+            </label>
+            <Input
+              id="admin-current-password"
+              type="password"
+              autoComplete="current-password"
+              value={currentPassword}
+              onChange={(event) => setCurrentPassword(event.target.value)}
+              placeholder="Enter current password"
+            />
+            <p className="text-xs text-muted-foreground">
+              If you signed in using an email link and do not have a password yet, you can leave this blank and set one below.
+            </p>
+          </div>
+
+          <div className="space-y-1.5">
+            <label htmlFor="admin-new-password" className="text-sm font-medium text-ink">
+              New password
+            </label>
+            <Input
+              id="admin-new-password"
+              type="password"
+              minLength={6}
+              autoComplete="new-password"
+              required
+              value={newPassword}
+              onChange={(event) => setNewPassword(event.target.value)}
+              placeholder="At least 6 characters"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <label htmlFor="admin-confirm-password" className="text-sm font-medium text-ink">
+              Confirm new password
+            </label>
+            <Input
+              id="admin-confirm-password"
+              type="password"
+              minLength={6}
+              autoComplete="new-password"
+              required
+              value={confirmPassword}
+              onChange={(event) => setConfirmPassword(event.target.value)}
+              placeholder="Re-enter new password"
+            />
+          </div>
+
+          <Button type="submit" className="rounded-full" disabled={saving || !newPassword || !confirmPassword}>
+            {saving ? "Changing…" : "Change password"}
+          </Button>
+        </form>
+      </div>
+    </div>
   );
 }
 
