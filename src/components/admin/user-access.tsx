@@ -42,13 +42,14 @@ export function UserAccess() {
   const usersQuery = useQuery({
     queryKey: ["admin-user-access"],
     queryFn: async () => {
-      const [profilesResult, rolesResult, permissionsResult, assignmentsResult, propertiesResult] =
+      const [profilesResult, rolesResult, permissionsResult, assignmentsResult, propertiesResult, invitesResult] =
         await Promise.all([
           db.from("profiles").select("id,full_name,email").order("full_name"),
           db.from("user_roles").select("id,user_id,role"),
           db.from("user_permissions").select("user_id,permission,allowed"),
           db.from("user_property_assignments").select("user_id,property_id"),
           db.from("properties").select("id,name").order("name"),
+          db.from("admin_invites").select("id,email,role,created_at,expires_at,accepted_at").order("created_at", { ascending: false }),
         ]);
 
       for (const result of [
@@ -57,6 +58,7 @@ export function UserAccess() {
         permissionsResult,
         assignmentsResult,
         propertiesResult,
+        invitesResult,
       ]) {
         if (result.error) throw result.error;
       }
@@ -89,6 +91,14 @@ export function UserAccess() {
       return {
         users,
         properties: (propertiesResult.data ?? []) as { id: string; name: string }[],
+        invites: (invitesResult.data ?? []) as {
+          id: string;
+          email: string;
+          role: AdminRole;
+          created_at: string;
+          expires_at: string;
+          accepted_at: string | null;
+        }[],
       };
     },
   });
@@ -212,6 +222,8 @@ export function UserAccess() {
 
   const users = usersQuery.data?.users ?? [];
   const properties = usersQuery.data?.properties ?? [];
+  const invites = usersQuery.data?.invites ?? [];
+  const pendingInvites = invites.filter((invite) => !invite.accepted_at);
 
   return (
     <div className="mt-6">
@@ -267,6 +279,33 @@ export function UserAccess() {
           </div>
         </div>
       </div>
+
+      {pendingInvites.length > 0 && (
+        <div className="mb-6 rounded-3xl border border-border/80 bg-card p-5 shadow-sm">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <h3 className="font-display text-lg font-bold text-ink">Pending invites</h3>
+              <p className="mt-1 text-sm text-muted-foreground">
+                These people have been invited but have not completed their first sign-in yet.
+              </p>
+            </div>
+            <Badge variant="secondary" className="rounded-full">{pendingInvites.length} pending</Badge>
+          </div>
+          <div className="mt-4 divide-y divide-border">
+            {pendingInvites.map((invite) => (
+              <div key={invite.id} className="flex flex-col gap-2 py-3 first:pt-0 last:pb-0 sm:flex-row sm:items-center sm:justify-between">
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold text-ink">{invite.email}</p>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    Invited as {roleLabels[invite.role] ?? invite.role} · expires {new Date(invite.expires_at).toLocaleDateString()}
+                  </p>
+                </div>
+                <Badge variant="outline" className="w-fit rounded-full">Pending Invite</Badge>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="space-y-4">
         {users.map((user) => (
