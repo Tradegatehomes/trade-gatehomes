@@ -129,6 +129,101 @@ function AdminPage() {
   );
 }
 
+function AdminInbox() {
+  const [lastRead, setLastRead] = useState(() => localStorage.getItem("tradegate-admin-inbox-read") || "");
+  const q = useQuery({
+    queryKey: ["admin-inbox"],
+    queryFn: async () => {
+      const since = new Date(Date.now() - 30 * 86400000).toISOString();
+      const [bookings, reviews] = await Promise.all([
+        supabase.from("bookings").select("id,reference,guest_name,check_in,status,created_at,properties(name)").gte("created_at", since).order("created_at", { ascending: false }).limit(50),
+        supabase.from("reviews").select("id,guest_name,rating,created_at,properties(name)").gte("created_at", since).order("created_at", { ascending: false }).limit(50),
+      ]);
+      if (bookings.error) throw bookings.error;
+      if (reviews.error) throw reviews.error;
+      return [
+        ...(bookings.data ?? []).map((b) => ({
+          id: "booking-" + b.id,
+          at: b.created_at,
+          title: b.status === "pending" ? "New booking request" : "Booking activity",
+          body: `${b.guest_name} · ${b.properties?.name ?? "Property"} · check-in ${formatDate(b.check_in)}`,
+        })),
+        ...(reviews.data ?? []).map((r) => ({
+          id: "review-" + r.id,
+          at: r.created_at,
+          title: "New guest review",
+          body: `${r.guest_name} left ${r.rating}/5 for ${r.properties?.name ?? "Property"}`,
+        })),
+      ].sort((a, b) => b.at.localeCompare(a.at));
+    },
+  });
+  const unread = (q.data ?? []).filter((item) => !lastRead || item.at > lastRead).length;
+  function markRead() {
+    const now = new Date().toISOString();
+    localStorage.setItem("tradegate-admin-inbox-read", now);
+    setLastRead(now);
+  }
+  return (
+    <div className="mt-6 space-y-4">
+      <SectionIntro eyebrow="Operations inbox" title="Notifications" description="Recent booking and review activity that may need attention." action={
+        <Button variant="outline" className="rounded-full" onClick={markRead}>
+          <Bell className="mr-1 size-4" />{unread ? `Mark ${unread} read` : "All caught up"}
+        </Button>
+      } />
+      <div className={card + " divide-y divide-border"}>
+        {(q.data ?? []).map((item) => (
+          <div key={item.id} className="py-4 first:pt-0 last:pb-0">
+            <div className="flex items-start justify-between gap-3">
+              <div><p className="text-sm font-semibold text-ink">{item.title}</p><p className="mt-1 text-sm text-muted-foreground">{item.body}</p></div>
+              {(!lastRead || item.at > lastRead) && <span className="mt-1 size-2 shrink-0 rounded-full bg-brand" />}
+            </div>
+            <p className="mt-2 text-xs text-muted-foreground">{new Date(item.at).toLocaleString()}</p>
+          </div>
+        ))}
+        {!q.isLoading && (q.data ?? []).length === 0 && <p className="py-6 text-center text-sm text-muted-foreground">No recent notifications.</p>}
+      </div>
+    </div>
+  );
+}
+
+function ActivityLog() {
+  const q = useQuery({
+    queryKey: ["admin-activity-feed"],
+    queryFn: async () => {
+      const [bookings, blocks, rules, discounts, reviews, properties] = await Promise.all([
+        supabase.from("bookings").select("id,reference,created_at,properties(name)").order("created_at", { ascending: false }).limit(30),
+        supabase.from("blocked_dates").select("id,created_at,start_date,end_date,properties(name)").order("created_at", { ascending: false }).limit(30),
+        supabase.from("pricing_rules").select("id,created_at,label,rule_type,properties(name)").order("created_at", { ascending: false }).limit(30),
+        supabase.from("discount_codes").select("id,created_at,code").order("created_at", { ascending: false }).limit(30),
+        supabase.from("reviews").select("id,created_at,guest_name,properties(name)").order("created_at", { ascending: false }).limit(30),
+        supabase.from("properties").select("id,created_at,name").order("created_at", { ascending: false }).limit(30),
+      ]);
+      for (const result of [bookings, blocks, rules, discounts, reviews, properties]) if (result.error) throw result.error;
+      return [
+        ...(bookings.data ?? []).map((x) => ({ id: "b" + x.id, at: x.created_at, title: "Booking created", body: `${x.reference} · ${x.properties?.name ?? "Property"}` })),
+        ...(blocks.data ?? []).map((x) => ({ id: "a" + x.id, at: x.created_at, title: "Availability blocked", body: `${x.properties?.name ?? "Property"} · ${formatDate(x.start_date)} → ${formatDate(x.end_date)}` })),
+        ...(rules.data ?? []).map((x) => ({ id: "p" + x.id, at: x.created_at, title: "Pricing rule added", body: `${x.properties?.name ?? "Property"} · ${x.label ?? x.rule_type}` })),
+        ...(discounts.data ?? []).map((x) => ({ id: "d" + x.id, at: x.created_at, title: "Discount created", body: x.code })),
+        ...(reviews.data ?? []).map((x) => ({ id: "r" + x.id, at: x.created_at, title: "Review received", body: `${x.guest_name} · ${x.properties?.name ?? "Property"}` })),
+        ...(properties.data ?? []).map((x) => ({ id: "x" + x.id, at: x.created_at, title: "Property created", body: x.name })),
+      ].sort((a, b) => b.at.localeCompare(a.at)).slice(0, 100);
+    },
+  });
+  return (
+    <div className="mt-6 space-y-4">
+      <SectionIntro eyebrow="Oversight" title="Activity log" description="Recent operational records across bookings, listings, pricing, availability, discounts and reviews." />
+      <div className={card + " divide-y divide-border"}>
+        {(q.data ?? []).map((item) => (
+          <div key={item.id} className="flex flex-col gap-1 py-3 first:pt-0 last:pb-0 sm:flex-row sm:items-center sm:justify-between">
+            <div><p className="text-sm font-semibold text-ink">{item.title}</p><p className="text-xs text-muted-foreground">{item.body}</p></div>
+            <p className="text-xs text-muted-foreground">{new Date(item.at).toLocaleString()}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function Shell({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-[calc(100vh-5rem)] bg-cream/40">
