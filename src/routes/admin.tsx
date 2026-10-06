@@ -911,50 +911,93 @@ function Blocked() {
   const qc = useQueryClient();
   const props = useProps();
   const [propertyId, setPropertyId] = useState("");
+  const [month, setMonth] = useState(() => new Date().toISOString().slice(0, 7));
   const [start, setStart] = useState("");
   const [end, setEnd] = useState("");
   const [note, setNote] = useState("");
+
+  const monthStart = month + "-01";
+  const [year, monthNumber] = month.split("-").map(Number);
+  const nextMonth = new Date(year, monthNumber, 1).toISOString().slice(0, 10);
+
   const q = useQuery({
-    queryKey: ["admin-blocked"],
+    queryKey: ["admin-availability-calendar", propertyId, month],
+    enabled: !!propertyId,
     queryFn: async () => {
-      const { data, error } = await supabase.from("blocked_dates").select("id,start_date,end_date,note,properties(name)").order("start_date");
-      if (error) throw error;
-      return data;
+      const [blocked, bookings] = await Promise.all([
+        supabase.from("blocked_dates").select("id,start_date,end_date,note").eq("property_id", propertyId).lt("start_date", nextMonth).gt("end_date", monthStart).order("start_date"),
+        supabase.from("bookings").select("id,reference,guest_name,check_in,check_out,status").eq("property_id", propertyId).not("status", "in", '("cancelled","refunded")').lt("check_in", nextMonth).gt("check_out", monthStart).order("check_in"),
+      ]);
+      if (blocked.error) throw blocked.error;
+      if (bookings.error) throw bookings.error;
+      return { blocked: blocked.data ?? [], bookings: bookings.data ?? [] };
     },
   });
-  const refresh = () => qc.invalidateQueries({ queryKey: ["admin-blocked"] });
+
+  const daysInMonth = new Date(year, monthNumber, 0).getDate();
+  const firstDay = new Date(year, monthNumber - 1, 1).getDay();
+  const calendarDays = Array.from({ length: firstDay + daysInMonth }, (_, index) => {
+    if (index < firstDay) return null;
+    const day = index - firstDay + 1;
+    const iso = new Date(year, monthNumber - 1, day).toISOString().slice(0, 10);
+    const booking = (q.data?.bookings ?? []).find((b) => b.check_in <= iso && b.check_out > iso);
+    const block = (q.data?.blocked ?? []).find((b) => b.start_date <= iso && b.end_date > iso);
+    return { day, iso, booking, block };
+  });
+
   async function add() {
     if (!propertyId || !start || !end || end <= start) { toast.error("Pick a property and a valid date range."); return; }
     const { error } = await supabase.from("blocked_dates").insert({ property_id: propertyId, start_date: start, end_date: end, note: note || null });
     if (error) { toast.error(error.message); return; }
     toast.success("Dates blocked");
-    setNote("");
-    refresh();
+    setStart(""); setEnd(""); setNote("");
+    qc.invalidateQueries({ queryKey: ["admin-availability-calendar"] });
   }
+
   async function remove(id: string) {
     const { error } = await supabase.from("blocked_dates").delete().eq("id", id);
     if (error) { toast.error(error.message); return; }
-    refresh();
+    toast.success("Block removed");
+    qc.invalidateQueries({ queryKey: ["admin-availability-calendar"] });
   }
+
   return (
     <div className="mt-6">
-      <SectionIntro eyebrow="Availability" title="Blocked dates" description="Keep unavailable dates out of the booking flow for maintenance, owner use or manual holds." />
-      <div className={`${card} mb-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-5`}>
+      <SectionIntro eyebrow="Availability" title="Availability calendar" description="See booked, blocked and open dates at a glance, then manage manual holds." />
+      <div className={card + " mb-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-5"}>
         <Select value={propertyId} onValueChange={setPropertyId}>
-          <SelectTrigger className="w-full"><SelectValue placeholder="Property" /></SelectTrigger>
+          <SelectTrigger><SelectValue placeholder="Property" /></SelectTrigger>
           <SelectContent>{(props.data ?? []).map((p) => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}</SelectContent>
         </Select>
-        <Input type="date" className="w-full" value={start} onChange={(e) => setStart(e.target.value)} aria-label="From" />
-        <Input type="date" className="w-full" value={end} onChange={(e) => setEnd(e.target.value)} aria-label="Until" />
-        <Input className="w-full" placeholder="Note (optional)" value={note} onChange={(e) => setNote(e.target.value)} />
-        <Button className="w-full sm:w-auto" onClick={add}>Block dates</Button>
+        <Input type="month" value={month} onChange={(e) => setMonth(e.target.value)} aria-label="Calendar month" />
+        <Input type="date" value={start} onChange={(e) => setStart(e.target.value)} aria-label="Block from" />
+        <Input type="date" value={end} onChange={(e) => setEnd(e.target.value)} aria-label="Block until" />
+        <Button onClick={add}>Block dates</Button>
+        <Input className="sm:col-span-2 xl:col-span-5" placeholder="Block note (optional)" value={note} onChange={(e) => setNote(e.target.value)} />
       </div>
-      <div className="space-y-3">{(q.data ?? []).map((b) => (
-        <div key={b.id} className={`${card} flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center`}>
-          <p className="text-sm"><span className="font-semibold text-ink">{b.properties?.name}</span> · {formatDate(b.start_date)} → {formatDate(b.end_date)}{b.note ? ` · ${b.note}` : ""}</p>
-          <Button size="sm" variant="ghost" onClick={() => remove(b.id)}>Remove</Button>
+
+      {propertyId ? (
+        <div className={card}>
+          <div className="mb-4 flex flex-wrap gap-4 text-xs text-muted-foreground">
+            <span>Booked dates show the guest name</span><span>Blocked dates can be removed directly</span>
+          </div>
+          <div className="grid grid-cols-7 gap-1 text-center text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
+            {["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].map((day) => <div key={day} className="py-2">{day}</div>)}
+          </div>
+          <div className="grid grid-cols-7 gap-1">
+            {calendarDays.map((item, index) => item ? (
+              <div key={item.iso} className={`min-h-24 rounded-xl border p-2 ${item.booking ? "bg-secondary/70" : item.block ? "bg-muted/60" : "bg-background"}`}>
+                <div className="flex items-start justify-between gap-1"><span className="text-xs font-bold text-ink">{item.day}</span>{item.booking && <Badge variant="secondary" className="px-1.5 text-[9px]">Booked</Badge>}{!item.booking && item.block && <Badge variant="outline" className="px-1.5 text-[9px]">Blocked</Badge>}</div>
+                {item.booking && <p className="mt-2 truncate text-[10px] text-muted-foreground">{item.booking.guest_name}</p>}
+                {item.block && <button type="button" onClick={() => remove(item.block.id)} className="mt-2 text-[10px] font-semibold text-destructive hover:underline">Remove block</button>}
+                {!item.booking && !item.block && <p className="mt-2 text-[10px] text-muted-foreground">Available</p>}
+              </div>
+            ) : <div key={"empty-" + index} />)}
+          </div>
         </div>
-      ))}</div>
+      ) : (
+        <div className={card + " py-10 text-center text-sm text-muted-foreground"}>Choose a property to open its calendar.</div>
+      )}
     </div>
   );
 }
