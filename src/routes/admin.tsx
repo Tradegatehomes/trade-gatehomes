@@ -543,7 +543,7 @@ function PropertyEditor({ property, onCancel, onSave, saving }: {
     airbnb_listing_url: property?.airbnb_listing_url ?? "",
     amenity_ids: property?.property_amenities?.map((item) => item.amenity_id) ?? [],
   });
-  const field = (name: Exclude<keyof PropertyFormValues, "amenity_ids">, value: string) => setValues((current) => ({ ...current, [name]: value }));
+  const field = <K extends Exclude<keyof PropertyFormValues, "amenity_ids">>(name: K, value: PropertyFormValues[K]) => setValues((current) => ({ ...current, [name]: value }));
   const slugFromName = (value: string) => field("slug", value.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""));
   const photos = usePropertyPhotos(property?.id);
   const amenities = useQuery({
@@ -600,7 +600,7 @@ function PropertyEditor({ property, onCancel, onSave, saving }: {
         <p className="mt-1 text-xs leading-5 text-muted-foreground">Control whether guests can pay a deposit and when the remaining balance becomes due.</p>
         <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <FormField label="Deposit option">
-            <Select value={values.deposit_required} onValueChange={(value) => field("deposit_required", value)}>
+            <Select value={values.deposit_required} onValueChange={(value) => field("deposit_required", value as PropertyFormValues["deposit_required"])}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent><SelectItem value="no">Full payment only</SelectItem><SelectItem value="yes">Allow deposit</SelectItem></SelectContent>
             </Select>
