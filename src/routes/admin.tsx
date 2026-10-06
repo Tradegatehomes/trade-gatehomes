@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { BarChart3, BedDouble, CalendarDays, CreditCard, Home, ListChecks, Percent, Settings2, ShieldCheck, Star, Tags } from "lucide-react";
+import { BarChart3, BedDouble, Bell, CalendarDays, History, Home, ListChecks, Percent, Plus, Search, Settings2, ShieldCheck, Star, Tags } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminAccess, type AdminPermission } from "@/hooks/use-admin-access";
@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { formatDate, formatNaira } from "@/lib/format";
-import { Discounts, Payments, PricingRules, PropertyAmenities, Reviews } from "@/components/admin/extra-tabs";
+import { Discounts, PricingRules, PropertyAmenities, Reviews } from "@/components/admin/extra-tabs";
 import { UserAccess } from "@/components/admin/user-access";
 import type { Database } from "@/integrations/supabase/types";
 
@@ -20,12 +20,6 @@ type BookingStatus = Database["public"]["Enums"]["booking_status"];
 type PropertyStatus = Database["public"]["Enums"]["property_status"];
 const BOOKING_STATUSES: BookingStatus[] = ["pending", "confirmed", "partially_paid", "fully_paid", "completed", "cancelled", "refunded"];
 const PROPERTY_STATUSES: PropertyStatus[] = ["active", "inactive", "draft", "maintenance"];
-const DEFAULT_PROPERTY_CONTACT = {
-  phone: "+2347058860184",
-  whatsapp: "+2347058860184",
-  email: "tradegateconcept@gmail.com",
-};
-
 export const Route = createFileRoute("/admin")({
   head: () => ({
     meta: [
@@ -62,15 +56,16 @@ function AdminPage() {
     superAdminOnly?: boolean;
   }[] = [
     { value: "overview", label: "Overview", icon: BarChart3, group: "Workspace", permission: "view_dashboard" },
+    { value: "inbox", label: "Inbox", icon: Bell, group: "Workspace", permission: "view_dashboard" },
     { value: "bookings", label: "Bookings", icon: ListChecks, group: "Operations", permission: "manage_bookings" },
     { value: "properties", label: "Properties", icon: Home, group: "Operations", permission: "manage_properties" },
     { value: "calendar", label: "Availability", icon: CalendarDays, group: "Operations", permission: "manage_availability" },
     { value: "pricing", label: "Pricing", icon: Percent, group: "Revenue", permission: "manage_pricing" },
-    { value: "payments", label: "Payments", icon: CreditCard, group: "Revenue", permission: "manage_payments" },
     { value: "discounts", label: "Discounts", icon: Tags, group: "Revenue", permission: "manage_discounts" },
     { value: "amenities", label: "Amenities", icon: Settings2, group: "Content", permission: "manage_amenities" },
     { value: "reviews", label: "Reviews", icon: Star, group: "Content", permission: "manage_reviews" },
     { value: "users", label: "Users & Roles", icon: ShieldCheck, group: "Access", permission: "manage_users", superAdminOnly: true },
+    { value: "activity", label: "Activity Log", icon: History, group: "Access", permission: "manage_users", superAdminOnly: true },
   ];
 
   const navItems = allNavItems.filter(
@@ -117,15 +112,16 @@ function AdminPage() {
 
           <div className="min-w-0">
             {can("view_dashboard") && <TabsContent value="overview" className="mt-0"><Overview /></TabsContent>}
+            {can("view_dashboard") && <TabsContent value="inbox" className="mt-0"><AdminInbox /></TabsContent>}
             {can("manage_bookings") && <TabsContent value="bookings" className="mt-0"><Bookings /></TabsContent>}
             {can("manage_properties") && <TabsContent value="properties" className="mt-0"><Properties /></TabsContent>}
             {can("manage_pricing") && <TabsContent value="pricing" className="mt-0"><PricingRules /></TabsContent>}
             {can("manage_amenities") && <TabsContent value="amenities" className="mt-0"><PropertyAmenities /></TabsContent>}
             {can("manage_availability") && <TabsContent value="calendar" className="mt-0"><Blocked /></TabsContent>}
-            {can("manage_payments") && <TabsContent value="payments" className="mt-0"><Payments /></TabsContent>}
             {can("manage_reviews") && <TabsContent value="reviews" className="mt-0"><Reviews /></TabsContent>}
             {can("manage_discounts") && <TabsContent value="discounts" className="mt-0"><Discounts /></TabsContent>}
             {isSuperAdmin && can("manage_users") && <TabsContent value="users" className="mt-0"><UserAccess /></TabsContent>}
+            {isSuperAdmin && can("manage_users") && <TabsContent value="activity" className="mt-0"><ActivityLog /></TabsContent>}
           </div>
         </Tabs>
       )}
@@ -491,9 +487,9 @@ function PropertyEditor({ property, onCancel, onSave, saving }: {
     bedrooms: String(property?.bedrooms ?? 1), bathrooms: String(property?.bathrooms ?? 1), max_guests: String(property?.max_guests ?? 2),
     base_price: String(property?.base_price ?? 0), cleaning_fee: String(property?.cleaning_fee ?? 0), min_nights: String(property?.min_nights ?? 1),
     house_rules: property?.house_rules ?? "", cancellation_policy: property?.cancellation_policy ?? "",
-    phone: property?.phone ?? DEFAULT_PROPERTY_CONTACT.phone,
-    whatsapp: property?.whatsapp ?? DEFAULT_PROPERTY_CONTACT.whatsapp,
-    email: property?.email ?? DEFAULT_PROPERTY_CONTACT.email,
+    phone: property?.phone ?? "",
+    whatsapp: property?.whatsapp ?? "",
+    email: property?.email ?? "",
     amenity_ids: property?.property_amenities?.map((item) => item.amenity_id) ?? [],
   });
   const field = (name: Exclude<keyof PropertyFormValues, "amenity_ids">, value: string) => setValues((current) => ({ ...current, [name]: value }));
