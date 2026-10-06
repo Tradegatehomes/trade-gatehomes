@@ -399,6 +399,18 @@ function Bookings() {
   const [bookingProperty, setBookingProperty] = useState("all");
   const [bookingFrom, setBookingFrom] = useState("");
   const [bookingTo, setBookingTo] = useState("");
+  const [showManualBooking, setShowManualBooking] = useState(false);
+  const [manualBooking, setManualBooking] = useState({
+    propertyId: "",
+    guestName: "",
+    guestEmail: "",
+    guestPhone: "",
+    checkIn: "",
+    checkOut: "",
+    guests: "1",
+    notes: "",
+  });
+  const [creatingManualBooking, setCreatingManualBooking] = useState(false);
   const bookingProps = useProps();
   const q = useQuery({
     queryKey: ["admin-bookings"],
@@ -423,6 +435,34 @@ function Bookings() {
     },
     onError: (e) => toast.error(e instanceof Error ? e.message : "Update failed"),
   });
+  async function createManualBooking() {
+    if (!manualBooking.propertyId || !manualBooking.guestName.trim() || !manualBooking.guestEmail.trim() || !manualBooking.guestPhone.trim() || !manualBooking.checkIn || !manualBooking.checkOut) {
+      toast.error("Complete the property, guest and stay details.");
+      return;
+    }
+    setCreatingManualBooking(true);
+    const { data: reference, error } = await (supabase as any).rpc("admin_create_booking", {
+      p_property_id: manualBooking.propertyId,
+      p_check_in: manualBooking.checkIn,
+      p_check_out: manualBooking.checkOut,
+      p_guests: Number(manualBooking.guests),
+      p_guest_name: manualBooking.guestName.trim(),
+      p_guest_email: manualBooking.guestEmail.trim().toLowerCase(),
+      p_guest_phone: manualBooking.guestPhone.trim(),
+      p_notes: manualBooking.notes.trim() || null,
+    });
+    setCreatingManualBooking(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success(`Booking ${reference} created and confirmed`);
+    setManualBooking({ propertyId: "", guestName: "", guestEmail: "", guestPhone: "", checkIn: "", checkOut: "", guests: "1", notes: "" });
+    setShowManualBooking(false);
+    qc.invalidateQueries({ queryKey: ["admin-bookings"] });
+    qc.invalidateQueries({ queryKey: ["admin-overview"] });
+  }
+
   const bookingTerm = bookingSearch.trim().toLowerCase();
   const rows = (q.data ?? []).filter((b) => {
     if (filter !== "all" && b.status !== filter) return false;
@@ -434,7 +474,34 @@ function Bookings() {
   });
   return (
     <div className="mt-6">
-      <SectionIntro eyebrow="Guest operations" title="Bookings" description="Review upcoming stays, guest details and booking status changes." />
+      <SectionIntro
+        eyebrow="Guest operations"
+        title="Bookings"
+        description="Review, search and manage reservations, including phone or WhatsApp bookings."
+        action={<Button className="rounded-full" onClick={() => setShowManualBooking((value) => !value)}><Plus className="mr-1 size-4" />{showManualBooking ? "Close form" : "Create booking"}</Button>}
+      />
+      {showManualBooking && (
+        <div className={card + " mb-4"}>
+          <div>
+            <h3 className="font-display text-lg font-bold text-ink">Manual booking</h3>
+            <p className="mt-1 text-sm text-muted-foreground">Use this for phone, WhatsApp or walk-in reservations. The normal availability and pricing engine still validates the stay.</p>
+          </div>
+          <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            <Select value={manualBooking.propertyId} onValueChange={(value) => setManualBooking((current) => ({ ...current, propertyId: value }))}>
+              <SelectTrigger><SelectValue placeholder="Property" /></SelectTrigger>
+              <SelectContent>{(bookingProps.data ?? []).map((p) => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}</SelectContent>
+            </Select>
+            <Input placeholder="Guest name" value={manualBooking.guestName} onChange={(e) => setManualBooking((current) => ({ ...current, guestName: e.target.value }))} />
+            <Input type="email" placeholder="Guest email" value={manualBooking.guestEmail} onChange={(e) => setManualBooking((current) => ({ ...current, guestEmail: e.target.value }))} />
+            <Input placeholder="Guest phone" value={manualBooking.guestPhone} onChange={(e) => setManualBooking((current) => ({ ...current, guestPhone: e.target.value }))} />
+            <Input type="date" aria-label="Check-in" value={manualBooking.checkIn} onChange={(e) => setManualBooking((current) => ({ ...current, checkIn: e.target.value }))} />
+            <Input type="date" aria-label="Check-out" value={manualBooking.checkOut} onChange={(e) => setManualBooking((current) => ({ ...current, checkOut: e.target.value }))} />
+            <Input type="number" min="1" aria-label="Guests" value={manualBooking.guests} onChange={(e) => setManualBooking((current) => ({ ...current, guests: e.target.value }))} />
+            <div className="sm:col-span-2"><Textarea placeholder="Notes (optional)" value={manualBooking.notes} onChange={(e) => setManualBooking((current) => ({ ...current, notes: e.target.value }))} /></div>
+            <Button disabled={creatingManualBooking} onClick={createManualBooking}>{creatingManualBooking ? "Creating…" : "Create & confirm booking"}</Button>
+          </div>
+        </div>
+      )}
       <div className={card + " mb-4 grid gap-3 md:grid-cols-2 xl:grid-cols-5"}>
         <div className="relative xl:col-span-2">
           <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
