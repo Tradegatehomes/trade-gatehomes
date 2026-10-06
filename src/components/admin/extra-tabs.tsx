@@ -17,7 +17,7 @@ function usePropertyList() {
   return useQuery({
     queryKey: ["admin-properties-list"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("properties").select("id,name").order("name");
+      const { data, error } = await supabase.from("properties").select("id,name,base_price").order("name");
       if (error) throw error;
       return data;
     },
@@ -47,6 +47,7 @@ export function PricingRules() {
   const [price, setPrice] = useState("");
   const [modifier, setModifier] = useState("");
   const [minNights, setMinNights] = useState("");
+  const [previewMonth, setPreviewMonth] = useState(() => new Date().toISOString().slice(0, 7));
   const q = useQuery({
     queryKey: ["admin-pricing", propertyId],
     enabled: !!propertyId,
@@ -79,6 +80,33 @@ export function PricingRules() {
     if (error) { toast.error(error.message); return; }
     refresh();
   }
+  const selectedProperty = (usePropertyList().data ?? []).find((p) => p.id === propertyId);
+  const previewDays = (() => {
+    if (!propertyId || !selectedProperty) return [];
+    const [year, month] = previewMonth.split("-").map(Number);
+    const count = new Date(year, month, 0).getDate();
+    return Array.from({ length: count }, (_, index) => {
+      const date = new Date(year, month - 1, index + 1);
+      const iso = date.toISOString().slice(0, 10);
+      let rate = Number(selectedProperty.base_price);
+      let matches = 0;
+      for (const rule of q.data ?? []) {
+        const inRange = rule.rule_type === "weekend"
+          ? date.getDay() === 5 || date.getDay() === 6
+          : Boolean(rule.start_date && rule.end_date && iso >= rule.start_date && iso <= rule.end_date);
+        if (!inRange) continue;
+        matches += 1;
+        if (rule.nightly_price != null) rate = Number(rule.nightly_price);
+        else if (rule.price_modifier_percent != null) {
+          const pct = Number(rule.price_modifier_percent);
+          rate = rule.rule_type === "promotional" ? rate * (1 - pct / 100) : rate * (1 + pct / 100);
+        }
+      }
+      return { iso, day: index + 1, rate: Math.round(rate), overlaps: matches > 1 };
+    });
+  })();
+  const overlapCount = previewDays.filter((day) => day.overlaps).length;
+
   return (
     <div className="mt-6 space-y-4">
       <div><p className="text-xs font-bold uppercase tracking-[0.16em] text-brand">Revenue controls</p><h2 className="mt-1 font-display text-2xl font-bold text-ink">Pricing</h2><p className="mt-1 text-sm text-muted-foreground">Create seasonal, weekend and promotional pricing rules without changing the base nightly rate.</p></div>
@@ -103,6 +131,19 @@ export function PricingRules() {
             <Button className="w-full sm:w-auto" onClick={add}>Add rule</Button>
           </div>
           {q.data?.length === 0 && <p className="text-muted-foreground">No pricing rules — the base price applies.</p>}
+          <div className={card}>
+            <div className="flex flex-wrap items-end justify-between gap-3">
+              <div>
+                <h3 className="font-display text-lg font-bold text-ink">Pricing preview</h3>
+                <p className="mt-1 text-sm text-muted-foreground">See the nightly rate guests will encounter across a month.</p>
+              </div>
+              <Input type="month" className="w-full sm:w-48" value={previewMonth} onChange={(e) => setPreviewMonth(e.target.value)} aria-label="Preview month" />
+            </div>
+            {overlapCount > 0 && <div className="mt-4 rounded-2xl border border-amber-300/60 bg-amber-50 p-3 text-sm text-amber-900">{overlapCount} day{overlapCount === 1 ? "" : "s"} have overlapping pricing rules. Review those dates before publishing new rates.</div>}
+            <div className="mt-4 grid grid-cols-4 gap-2 sm:grid-cols-7">
+              {previewDays.map((day) => <div key={day.iso} className={`rounded-xl border p-2 text-center ${day.overlaps ? "border-amber-300 bg-amber-50" : "border-border"}`}><p className="text-xs font-semibold text-muted-foreground">{day.day}</p><p className="mt-1 text-xs font-bold text-ink">{formatNaira(day.rate)}</p></div>)}
+            </div>
+          </div>
           {(q.data ?? []).map((r) => (
             <div key={r.id} className={`${card} flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center`}>
               <p className="text-sm">
