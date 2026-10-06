@@ -32,11 +32,36 @@ function AuthPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
+  const [magicBusy, setMagicBusy] = useState(false);
   const target = redirect && redirect.startsWith("/") ? redirect : "/account";
 
   useEffect(() => {
     if (user) navigate({ to: target });
   }, [user, target, navigate]);
+
+  async function sendMagicLink() {
+    const cleanEmail = email.trim().toLowerCase();
+    if (!cleanEmail) {
+      toast.error("Enter your email address first.");
+      return;
+    }
+    setMagicBusy(true);
+    try {
+      const { error } = await supabase.auth.signInWithOtp({
+        email: cleanEmail,
+        options: {
+          shouldCreateUser: false,
+          emailRedirectTo: window.location.origin + "/admin",
+        },
+      });
+      if (error) throw error;
+      toast.success("Check your email for a secure sign-in link.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not send sign-in link");
+    } finally {
+      setMagicBusy(false);
+    }
+  }
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -89,6 +114,27 @@ function AuthPage() {
           <Button type="submit" className="w-full rounded-full" disabled={busy}>
             {busy ? "Please wait…" : mode === "signin" ? "Sign in" : "Create account"}
           </Button>
+          {mode === "signin" && (
+            <>
+              <div className="flex items-center gap-3 py-1">
+                <div className="h-px flex-1 bg-border" />
+                <span className="text-xs font-medium text-muted-foreground">or</span>
+                <div className="h-px flex-1 bg-border" />
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full rounded-full"
+                disabled={magicBusy || !email.trim()}
+                onClick={sendMagicLink}
+              >
+                {magicBusy ? "Sending…" : "Email me a sign-in link"}
+              </Button>
+              <p className="text-center text-xs text-muted-foreground">
+                Invited admins can use the secure email link without needing a password first.
+              </p>
+            </>
+          )}
         </form>
         <button
           type="button"
