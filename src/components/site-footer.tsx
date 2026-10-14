@@ -1,8 +1,9 @@
 import { Link } from "@tanstack/react-router";
 import { Mail, MessageCircle, Phone } from "lucide-react";
 
-const WHATSAPP = "+2347058860184";
-const EMAIL = "tradegateconcept@gmail.com";
+const PHONE = "08069534435";
+const WHATSAPP = "+2348069534435";
+const EMAIL = "bookings@tradegatehomes.com";
 const whatsappLink = `https://wa.me/${WHATSAPP.replace(/\D/g, "")}`;
 
 export function SiteFooter() {
@@ -69,8 +70,8 @@ export function SiteFooter() {
           <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
             <li className="flex items-center gap-2">
               <Phone className="size-4" />
-              <a href={`tel:${WHATSAPP}`} className="hover:text-ink">
-                +234 705 886 0184
+              <a href={`tel:${PHONE}`} className="hover:text-ink">
+                0806 953 4435
               </a>
             </li>
             <li className="flex items-center gap-2">
@@ -87,7 +88,7 @@ export function SiteFooter() {
             <li className="flex items-center gap-2">
               <Mail className="size-4" />
               <a href={`mailto:${EMAIL}`} className="hover:text-ink">
-                tradegateconcept@gmail.com
+                bookings@tradegatehomes.com
               </a>
             </li>
           </ul>
