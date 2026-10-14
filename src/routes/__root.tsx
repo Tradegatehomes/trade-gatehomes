@@ -79,13 +79,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       {
         name: "description",
         content:
-          "Browse verified shortlet apartments in Lagos, Abuja and Port Harcourt. Live availability, clear Naira pricing, instant booking.",
+          "Browse verified shortlet apartments in Lagos, Abuja and the United States. Live availability, clear Naira pricing, instant booking.",
       },
       { property: "og:title", content: "TradeGate Continental Homes — Shortlet apartments in Nigeria" },
       {
         property: "og:description",
         content:
-          "Browse verified shortlet apartments in Lagos, Abuja and Port Harcourt. Live availability, clear Naira pricing, instant booking.",
+          "Browse verified shortlet apartments in Lagos, Abuja and the United States. Live availability, clear Naira pricing, instant booking.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
