@@ -570,9 +570,9 @@ function Properties() {
   const [search, setSearch] = useState("");
   const save = useMutation({
     mutationFn: async ({ id, values }: { id: string | null; values: PropertyFormValues }) => {
-      const { name, slug, city, state, address, property_type, description, bedrooms, bathrooms, max_guests, base_price, cleaning_fee, min_nights, house_rules, cancellation_policy, phone, whatsapp, email, amenity_ids } = values;
+      const { name, slug, city, state, country, address, property_type, description, bedrooms, bathrooms, max_guests, base_price, cleaning_fee, min_nights, house_rules, cancellation_policy, phone, whatsapp, email, amenity_ids } = values;
       const fields = {
-        name: name.trim(), slug: slug.trim(), city: city.trim(), state: state.trim() || null,
+        name: name.trim(), slug: slug.trim(), city: city.trim(), state: state.trim() || null, country: country || "Nigeria",
         address: address.trim() || null, property_type: property_type.trim() || "Apartment",
         description: description.trim() || null, bedrooms: Number(bedrooms), bathrooms: Number(bathrooms),
         max_guests: Number(max_guests), base_price: Number(base_price), cleaning_fee: Number(cleaning_fee),
@@ -670,7 +670,7 @@ function Properties() {
 }
 
 type PropertyFormValues = {
-  name: string; slug: string; city: string; state: string; address: string; property_type: string;
+  name: string; slug: string; city: string; state: string; country: string; address: string; property_type: string;
   description: string; bedrooms: string; bathrooms: string; max_guests: string; base_price: string;
   cleaning_fee: string; min_nights: string; house_rules: string; cancellation_policy: string;
   phone: string; whatsapp: string; email: string; amenity_ids: string[];
@@ -683,7 +683,7 @@ function PropertyEditor({ property, onCancel, onSave, saving }: {
   saving: boolean;
 }) {
   const [values, setValues] = useState<PropertyFormValues>({
-    name: property?.name ?? "", slug: property?.slug ?? "", city: property?.city ?? "", state: property?.state ?? "",
+    name: property?.name ?? "", slug: property?.slug ?? "", city: property?.city ?? "", state: property?.state ?? "", country: property?.country ?? "Nigeria",
     address: property?.address ?? "", property_type: property?.property_type ?? "Apartment", description: property?.description ?? "",
     bedrooms: String(property?.bedrooms ?? 1), bathrooms: String(property?.bathrooms ?? 1), max_guests: String(property?.max_guests ?? 2),
     base_price: String(property?.base_price ?? 0), cleaning_fee: String(property?.cleaning_fee ?? 0), min_nights: String(property?.min_nights ?? 1),
@@ -729,6 +729,15 @@ function PropertyEditor({ property, onCancel, onSave, saving }: {
         <FormField label="URL name"><Input value={values.slug} onChange={(e) => field("slug", e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "-"))} /></FormField>
         <FormField label="City"><Input value={values.city} onChange={(e) => field("city", e.target.value)} /></FormField>
         <FormField label="State / region"><Input value={values.state} onChange={(e) => field("state", e.target.value)} /></FormField>
+        <FormField label="Country">
+          <Select value={values.country} onValueChange={(value) => field("country", value)}>
+            <SelectTrigger><SelectValue placeholder="Select country" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Nigeria">Nigeria</SelectItem>
+              <SelectItem value="United States">United States</SelectItem>
+            </SelectContent>
+          </Select>
+        </FormField>
         <FormField label="Property type"><Input value={values.property_type} onChange={(e) => field("property_type", e.target.value)} /></FormField>
         <FormField label="Bedrooms"><Input type="number" min="0" value={values.bedrooms} onChange={(e) => field("bedrooms", e.target.value)} /></FormField>
         <FormField label="Bathrooms"><Input type="number" min="0" value={values.bathrooms} onChange={(e) => field("bathrooms", e.target.value)} /></FormField>
