@@ -73,7 +73,10 @@ export const listProperties = createServerFn({ method: "GET" })
       )
       .eq("status", "active");
 
-    if (data?.city) query = query.ilike("city", `%${data.city}%`);
+    if (data?.city) {
+      const location = data.city.replace(/[%(),]/g, " ").trim();
+      query = query.or(`city.ilike.%${location}%,country.ilike.%${location}%`);
+    }
     if (data?.guests) query = query.gte("max_guests", data.guests);
     if (data?.minPrice != null) query = query.gte("base_price", data.minPrice);
     if (data?.maxPrice != null) query = query.lte("base_price", data.maxPrice);
