@@ -19,13 +19,13 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "Verified shortlet apartments in Lagos, Abuja and Port Harcourt. Live availability calendars, clear Naira pricing, and quick reservation requests.",
+          "Verified shortlet apartments in Lagos, Abuja and the United States. Live availability calendars, clear Naira pricing, and quick reservation requests.",
       },
       { property: "og:title", content: "TradeGate Continental Homes — Shortlet apartments in Nigeria" },
       {
         property: "og:description",
         content:
-          "Verified shortlet apartments in Lagos, Abuja and Port Harcourt. Live availability calendars, clear Naira pricing, and quick reservation requests.",
+          "Verified shortlet apartments in Lagos, Abuja and the United States. Live availability calendars, clear Naira pricing, and quick reservation requests.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -45,7 +45,7 @@ function HomePage() {
         <div className="mx-auto grid max-w-6xl gap-10 px-4 py-14 lg:grid-cols-[1.1fr_0.9fr] lg:items-center lg:py-20">
           <div>
             <span className="inline-flex items-center gap-2 rounded-full bg-card px-4 py-1.5 text-xs font-bold uppercase tracking-wide text-ink/70 shadow-card">
-              <Sparkles className="size-3.5 text-brand" /> Verified shortlets across Nigeria
+              <Sparkles className="size-3.5 text-brand" /> Verified shortlets across Nigeria & the United States
             </span>
             <h1 className="mt-5 font-display text-4xl font-bold leading-[1.05] tracking-tight text-ink sm:text-5xl lg:text-6xl">
               Your home away from home, booked in minutes.
@@ -108,7 +108,7 @@ function HomePage() {
             {[
               { city: "Lagos", blurb: "Lagoon views, nightlife and business hubs" },
               { city: "Abuja", blurb: "Quiet, secure stays in the capital" },
-              { city: "Port Harcourt", blurb: "Family-sized apartments in GRA" },
+              { city: "United States", blurb: "Comfortable stays across select U.S. destinations" },
             ].map((c) => (
               <Link
                 key={c.city}
