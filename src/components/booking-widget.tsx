@@ -199,7 +199,7 @@ export function BookingWidget({ property }: { property: PropertyDetailDto }) {
                       <RadioGroupItem value="deposit" id="pay-deposit" />
                       <span>
                         Part payment now — <strong>{formatNaira(quote.deposit_amount_now)}</strong>,
-                        balance {formatNaira(quote.deposit_balance_amount)} due{" "}
+                        balance {formatNaira(quote.deposit_balance_amount)} due on or before{" "}
                         {quote.deposit_balance_due_date
                           ? formatDate(quote.deposit_balance_due_date)
                           : "before check-in"}
