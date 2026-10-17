@@ -174,11 +174,11 @@ function BookingConfirmationPage() {
             {b.payDeposit ? (
               <>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Due now (deposit)</span>
+                  <span className="text-muted-foreground">Due now (50% part payment)</span>
                   <span className="font-bold text-teal">{formatNaira(b.amountDueNow)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Balance due by {formatDate(b.balanceDueDate)}</span>
+                  <span className="text-muted-foreground">Balance due on or before {formatDate(b.checkIn)}</span>
                   <span className="font-semibold text-ink">{formatNaira(b.balanceAmount)}</span>
                 </div>
               </>
@@ -232,7 +232,7 @@ function BookingConfirmationPage() {
             <li>Successful payments are verified automatically and reflected on your booking.</li>
             <li>
               {b.payDeposit
-                ? `Pay the remaining ${formatNaira(b.balanceAmount)} by ${formatDate(b.balanceDueDate)}.`
+                ? `Pay the remaining ${formatNaira(b.balanceAmount)} on or before ${formatDate(b.checkIn)}.`
                 : "Your booking will show as fully paid once the payment is verified."}
             </li>
             <li>Show your reference {b.reference} at check-in.</li>
