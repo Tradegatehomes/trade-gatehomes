@@ -1,5 +1,5 @@
 import { createFileRoute, notFound, Link } from "@tanstack/react-router";
-import { useSuspenseQuery, queryOptions } from "@tanstack/react-query";
+import { useQueryClient, useSuspenseQuery, queryOptions } from "@tanstack/react-query";
 import {
   CalendarDays,
   CheckCircle2,
@@ -8,8 +8,14 @@ import {
   MessageCircle,
   Phone,
   ShieldCheck,
+  CreditCard,
+  Loader2,
 } from "lucide-react";
 import { getBookingByReference } from "@/lib/properties.functions";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+import { useEffect, useState } from "react";
 import { formatNaira, formatDate } from "@/lib/format";
 import { Badge } from "@/components/ui/badge";
 
@@ -20,6 +26,9 @@ const bookingQuery = (reference: string) =>
   });
 
 export const Route = createFileRoute("/booking/$reference")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    reference: typeof search.reference === "string" ? search.reference : undefined,
+  }),
   head: ({ loaderData }) => {
     const b = loaderData as Awaited<ReturnType<typeof getBookingByReference>> | undefined;
     if (!b) {
@@ -55,7 +64,57 @@ export const Route = createFileRoute("/booking/$reference")({
 });
 
 function BookingConfirmationPage() {
-  const { data: booking } = useSuspenseQuery(bookingQuery(Route.useParams().reference));
+  const params = Route.useParams();
+  const search = Route.useSearch();
+  const queryClient = useQueryClient();
+  const { data: booking } = useSuspenseQuery(bookingQuery(params.reference));
+  const [paying, setPaying] = useState(false);
+  const [verifying, setVerifying] = useState(Boolean(search.reference));
+
+  useEffect(() => {
+    if (!search.reference) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const { data, error } = await supabase.functions.invoke("paystack-payments", {
+          body: { action: "verify", reference: search.reference },
+        });
+        if (error) throw error;
+        if (!data?.success) throw new Error(data?.error || "Payment verification failed.");
+        if (!cancelled) {
+          toast.success(data.fullyPaid ? "Payment confirmed. Your booking is fully paid." : "Payment confirmed.");
+          await queryClient.invalidateQueries({ queryKey: ["booking", params.reference] });
+          window.history.replaceState({}, "", `/booking/${encodeURIComponent(params.reference)}`);
+        }
+      } catch (error) {
+        if (!cancelled) toast.error(error instanceof Error ? error.message : "Could not verify payment.");
+      } finally {
+        if (!cancelled) setVerifying(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [search.reference, params.reference, queryClient]);
+
+  async function payNow() {
+    setPaying(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("paystack-payments", {
+        body: { action: "initialize", bookingReference: params.reference },
+      });
+      if (error) throw error;
+      if (data?.paid) {
+        toast.success(data.message || "This booking is already fully paid.");
+        await queryClient.invalidateQueries({ queryKey: ["booking", params.reference] });
+        return;
+      }
+      if (!data?.authorizationUrl) throw new Error(data?.error || "Could not start payment.");
+      window.location.assign(data.authorizationUrl);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not start payment.");
+    } finally {
+      setPaying(false);
+    }
+  }
   if (!booking) throw notFound();
   const b = booking;
   const waNumber = b.property.whatsapp?.replace("+", "");
@@ -138,9 +197,29 @@ function BookingConfirmationPage() {
               </div>
             )}
           </div>
-          <div className="mt-4 flex items-start gap-2 rounded-xl bg-card p-3 text-xs text-muted-foreground">
-            <ShieldCheck className="mt-0.5 size-4 shrink-0 text-teal" />
-            Payment is handled separately after the reservation is reviewed. You will not be charged on this page.
+          <div className="mt-4 grid gap-3">
+            {["fully_paid", "completed"].includes(b.status) ? (
+              <div className="flex items-start gap-2 rounded-xl bg-card p-3 text-xs text-muted-foreground">
+                <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-teal" />
+                Payment received. No payment is currently due for this booking.
+              </div>
+            ) : (
+              <>
+                <Button
+                  size="lg"
+                  className="w-full rounded-2xl"
+                  onClick={payNow}
+                  disabled={paying || verifying}
+                >
+                  {paying || verifying ? <Loader2 className="size-4 animate-spin" /> : <CreditCard className="size-4" />}
+                  {verifying ? "Verifying payment…" : paying ? "Opening secure checkout…" : b.status === "partially_paid" ? `Pay balance · ${formatNaira(b.balanceAmount)}` : `Pay securely · ${formatNaira(b.amountDueNow)}`}
+                </Button>
+                <div className="flex items-start gap-2 rounded-xl bg-card p-3 text-xs text-muted-foreground">
+                  <ShieldCheck className="mt-0.5 size-4 shrink-0 text-teal" />
+                  Secure checkout is powered by Paystack. The amount is verified on our server before the booking status changes.
+                </div>
+              </>
+            )}
           </div>
         </div>
       </div>
@@ -149,12 +228,12 @@ function BookingConfirmationPage() {
         <div className="rounded-3xl bg-card p-6 shadow-card">
           <h3 className="font-display text-lg font-bold text-ink">Next steps</h3>
           <ol className="mt-3 list-decimal space-y-2 pl-5 text-sm text-muted-foreground">
-            <li>Watch your email or WhatsApp for confirmation and payment instructions for {formatNaira(b.amountDueNow)}.</li>
-            <li>Once payment is completed, your host confirms the booking.</li>
+            <li>Use the secure payment button above to pay {b.status === "partially_paid" ? "the remaining balance" : formatNaira(b.amountDueNow)}.</li>
+            <li>Successful payments are verified automatically and reflected on your booking.</li>
             <li>
               {b.payDeposit
                 ? `Pay the remaining ${formatNaira(b.balanceAmount)} by ${formatDate(b.balanceDueDate)}.`
-                : "Follow the payment instructions sent after confirmation."}
+                : "Your booking will show as fully paid once the payment is verified."}
             </li>
             <li>Show your reference {b.reference} at check-in.</li>
           </ol>
