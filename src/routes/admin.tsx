@@ -117,6 +117,7 @@ function AdminPage() {
             {can("manage_bookings") && <TabsContent value="bookings" className="mt-0"><Bookings /></TabsContent>}
             {can("manage_properties") && <TabsContent value="properties" className="mt-0"><Properties /></TabsContent>}
             {can("manage_pricing") && <TabsContent value="pricing" className="mt-0"><PricingRules /></TabsContent>}
+            {can("manage_payments") && <TabsContent value="payments" className="mt-0"><Payments /></TabsContent>}
             {can("manage_amenities") && <TabsContent value="amenities" className="mt-0"><PropertyAmenities /></TabsContent>}
             {can("manage_availability") && <TabsContent value="calendar" className="mt-0"><Blocked /></TabsContent>}
             {can("manage_reviews") && <TabsContent value="reviews" className="mt-0"><Reviews /></TabsContent>}
