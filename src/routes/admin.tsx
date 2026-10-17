@@ -401,6 +401,7 @@ function Bookings() {
   const [bookingProperty, setBookingProperty] = useState("all");
   const [bookingFrom, setBookingFrom] = useState("");
   const [bookingTo, setBookingTo] = useState("");
+  const [expandedBookingId, setExpandedBookingId] = useState<string | null>(null);
   const [showManualBooking, setShowManualBooking] = useState(false);
   const [manualBooking, setManualBooking] = useState({
     propertyId: "",
@@ -413,6 +414,7 @@ function Bookings() {
     notes: "",
   });
   const [creatingManualBooking, setCreatingManualBooking] = useState(false);
+
   const bookingProps = useQuery({
     queryKey: ["admin-booking-properties"],
     queryFn: async () => {
@@ -425,17 +427,19 @@ function Bookings() {
       return data ?? [];
     },
   });
+
   const q = useQuery({
     queryKey: ["admin-bookings"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("bookings")
-        .select("id,reference,property_id,guest_name,guest_email,guest_phone,check_in,check_out,guests,total_amount,status,properties(name)")
+        .select("id,reference,property_id,guest_name,guest_email,guest_phone,check_in,check_out,guests,nights,nightly_subtotal,cleaning_fee,service_fee,extra_guest_fee,discount_amount,discount_code,security_deposit,total_amount,amount_due_now,balance_amount,balance_due_date,pay_deposit,status,cancellation_reason,notes,created_at,properties(name,city,state,country),payments(id,reference,provider,amount,currency,is_deposit,status,paid_at,created_at)")
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return data;
+      return (data ?? []) as any[];
     },
   });
+
   const update = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: BookingStatus }) => {
       const { error } = await supabase.from("bookings").update({ status }).eq("id", id);
@@ -448,6 +452,7 @@ function Bookings() {
     },
     onError: (e) => toast.error(e instanceof Error ? e.message : "Update failed"),
   });
+
   async function createManualBooking() {
     if (!manualBooking.propertyId || !manualBooking.guestName.trim() || !manualBooking.guestEmail.trim() || !manualBooking.guestPhone.trim() || !manualBooking.checkIn || !manualBooking.checkOut) {
       toast.error("Complete the property, guest and stay details.");
@@ -485,14 +490,16 @@ function Bookings() {
     if (bookingTerm && ![b.reference, b.guest_name, b.guest_email, b.guest_phone ?? "", b.properties?.name ?? ""].some((value) => String(value).toLowerCase().includes(bookingTerm))) return false;
     return true;
   });
+
   return (
     <div className="mt-6">
       <SectionIntro
         eyebrow="Guest operations"
         title="Bookings"
-        description="Review, search and manage reservations, including phone or WhatsApp bookings."
+        description="Open any reservation to review guest details, stay information, payment progress and the complete price breakdown."
         action={<Button className="rounded-full" onClick={() => setShowManualBooking((value) => !value)}><Plus className="mr-1 size-4" />{showManualBooking ? "Close form" : "Create booking"}</Button>}
       />
+
       {showManualBooking && (
         <div className={card + " mb-4"}>
           <div>
@@ -515,6 +522,7 @@ function Bookings() {
           </div>
         </div>
       )}
+
       <div className={card + " mb-4 grid gap-3 md:grid-cols-2 xl:grid-cols-5"}>
         <div className="relative xl:col-span-2">
           <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -540,25 +548,192 @@ function Bookings() {
         </div>
         <div className="md:col-span-2 xl:col-span-5 text-xs text-muted-foreground">{rows.length} matching booking{rows.length === 1 ? "" : "s"}</div>
       </div>
+
       <div className="space-y-3">
-      {q.isLoading && <p className="text-muted-foreground">Loading…</p>}
-      {!q.isLoading && rows.length === 0 && <p className="text-muted-foreground">No bookings.</p>}
-      {rows.map((b) => (
-        <div key={b.id} className={`${card} flex flex-wrap items-center justify-between gap-4`}>
-          <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-2"><p className="font-semibold text-ink">{b.guest_name}</p><Badge variant="secondary" className="capitalize">{b.status.replace("_", " ")}</Badge></div>
-            <p className="mt-1 text-sm font-medium text-ink/80">{b.properties?.name}</p>
-            <p className="mt-1 text-sm text-muted-foreground">{formatDate(b.check_in)} → {formatDate(b.check_out)} · {b.guests} guests · {formatNaira(Number(b.total_amount))}</p>
-            <p className="text-xs text-muted-foreground">{b.reference} · {b.guest_email}{b.guest_phone ? ` · ${b.guest_phone}` : ""}</p>
-          </div>
-          <Select value={b.status} onValueChange={(v) => update.mutate({ id: b.id, status: v as BookingStatus })}>
-            <SelectTrigger className="w-full capitalize sm:w-44"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              {BOOKING_STATUSES.map((s) => <SelectItem key={s} value={s} className="capitalize">{s.replace("_", " ")}</SelectItem>)}
-            </SelectContent>
-          </Select>
-        </div>
-      ))}
+        {q.isLoading && <p className="text-muted-foreground">Loading…</p>}
+        {!q.isLoading && rows.length === 0 && <p className="text-muted-foreground">No bookings.</p>}
+
+        {rows.map((b) => {
+          const successfulPayments = (b.payments ?? []).filter((payment: any) => payment.status === "success");
+          const totalPaid = successfulPayments.reduce((sum: number, payment: any) => sum + Number(payment.amount ?? 0), 0);
+          const totalAmount = Number(b.total_amount ?? 0);
+          const remainingBalance = Math.max(0, Math.round((totalAmount - totalPaid) * 100) / 100);
+          const paymentState = totalPaid + 0.005 >= totalAmount
+            ? "Fully paid"
+            : totalPaid > 0
+              ? "Part payment"
+              : "Unpaid";
+          const isExpanded = expandedBookingId === b.id;
+          const sortedPayments = [...(b.payments ?? [])].sort((a: any, z: any) =>
+            String(z.paid_at ?? z.created_at).localeCompare(String(a.paid_at ?? a.created_at)),
+          );
+
+          return (
+            <div key={b.id} className={card + " overflow-hidden"}>
+              <div
+                className="cursor-pointer rounded-2xl outline-none transition hover:bg-secondary/30 focus-visible:ring-2 focus-visible:ring-ring"
+                role="button"
+                tabIndex={0}
+                aria-expanded={isExpanded}
+                onClick={() => setExpandedBookingId(isExpanded ? null : b.id)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    setExpandedBookingId(isExpanded ? null : b.id);
+                  }
+                }}
+              >
+                <div className="flex flex-col gap-4 p-1 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="font-semibold text-ink">{b.guest_name}</p>
+                      <Badge variant="secondary" className="capitalize">{b.status.replace("_", " ")}</Badge>
+                      <Badge variant={paymentState === "Fully paid" ? "default" : "outline"}>{paymentState}</Badge>
+                    </div>
+                    <p className="mt-1 text-sm font-medium text-ink/80">{b.properties?.name}</p>
+                    <p className="mt-1 text-sm text-muted-foreground">{formatDate(b.check_in)} → {formatDate(b.check_out)} · {b.guests} guest{Number(b.guests) === 1 ? "" : "s"} · {formatNaira(totalAmount)}</p>
+                    <p className="mt-1 text-xs text-muted-foreground">{b.reference} · {b.guest_email}{b.guest_phone ? ` · ${b.guest_phone}` : ""}</p>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2" onClick={(event) => event.stopPropagation()}>
+                    <div className="min-w-28 text-left sm:text-right">
+                      <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">Amount paid</p>
+                      <p className="text-sm font-bold text-ink">{formatNaira(totalPaid)}</p>
+                    </div>
+                    <Select value={b.status} onValueChange={(v) => update.mutate({ id: b.id, status: v as BookingStatus })}>
+                      <SelectTrigger className="w-full capitalize sm:w-44"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {BOOKING_STATUSES.map((s) => <SelectItem key={s} value={s} className="capitalize">{s.replace("_", " ")}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                    <Button type="button" size="sm" variant="outline" className="rounded-full" onClick={() => setExpandedBookingId(isExpanded ? null : b.id)}>
+                      {isExpanded ? "Hide details" : "View details"}
+                    </Button>
+                  </div>
+                </div>
+              </div>
+
+              {isExpanded && (
+                <div className="mt-5 border-t border-border pt-5">
+                  <div className="grid gap-4 lg:grid-cols-3">
+                    <section className="rounded-2xl border border-border bg-background p-4">
+                      <p className="text-xs font-bold uppercase tracking-[0.14em] text-brand">Guest</p>
+                      <h3 className="mt-1 font-display text-lg font-bold text-ink">{b.guest_name}</h3>
+                      <div className="mt-4 space-y-3 text-sm">
+                        <div><p className="text-xs text-muted-foreground">Email</p><a className="font-medium text-ink hover:underline" href={`mailto:${b.guest_email}`}>{b.guest_email}</a></div>
+                        <div><p className="text-xs text-muted-foreground">Phone</p>{b.guest_phone ? <a className="font-medium text-ink hover:underline" href={`tel:${b.guest_phone}`}>{b.guest_phone}</a> : <p className="font-medium text-ink">Not provided</p>}</div>
+                        <div><p className="text-xs text-muted-foreground">Guests</p><p className="font-medium text-ink">{b.guests}</p></div>
+                      </div>
+                    </section>
+
+                    <section className="rounded-2xl border border-border bg-background p-4">
+                      <p className="text-xs font-bold uppercase tracking-[0.14em] text-brand">Stay</p>
+                      <h3 className="mt-1 font-display text-lg font-bold text-ink">{b.properties?.name ?? "Property"}</h3>
+                      <div className="mt-4 space-y-3 text-sm">
+                        <div><p className="text-xs text-muted-foreground">Location</p><p className="font-medium text-ink">{[b.properties?.city, b.properties?.state, b.properties?.country].filter(Boolean).join(", ") || "—"}</p></div>
+                        <div><p className="text-xs text-muted-foreground">Check-in</p><p className="font-medium text-ink">{formatDate(b.check_in)}</p></div>
+                        <div><p className="text-xs text-muted-foreground">Check-out</p><p className="font-medium text-ink">{formatDate(b.check_out)}</p></div>
+                        <div><p className="text-xs text-muted-foreground">Length of stay</p><p className="font-medium text-ink">{b.nights} night{Number(b.nights) === 1 ? "" : "s"}</p></div>
+                      </div>
+                    </section>
+
+                    <section className="rounded-2xl border border-border bg-background p-4">
+                      <p className="text-xs font-bold uppercase tracking-[0.14em] text-brand">Payment</p>
+                      <div className="mt-1 flex flex-wrap items-center gap-2">
+                        <h3 className="font-display text-lg font-bold text-ink">{paymentState}</h3>
+                        <Badge variant={paymentState === "Fully paid" ? "default" : "secondary"}>{b.pay_deposit ? "50 / 50" : "Full payment"}</Badge>
+                      </div>
+                      <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
+                        <div><p className="text-xs text-muted-foreground">Booking total</p><p className="font-bold text-ink">{formatNaira(totalAmount)}</p></div>
+                        <div><p className="text-xs text-muted-foreground">Amount paid</p><p className="font-bold text-ink">{formatNaira(totalPaid)}</p></div>
+                        <div><p className="text-xs text-muted-foreground">Outstanding</p><p className="font-bold text-ink">{formatNaira(remainingBalance)}</p></div>
+                        <div><p className="text-xs text-muted-foreground">Due now</p><p className="font-bold text-ink">{formatNaira(Number(b.amount_due_now ?? 0))}</p></div>
+                      </div>
+                      {remainingBalance > 0 && (
+                        <p className="mt-4 rounded-xl bg-secondary/60 px-3 py-2 text-xs text-muted-foreground">
+                          Balance due on or before <strong className="text-ink">{formatDate(b.check_in)}</strong>.
+                        </p>
+                      )}
+                    </section>
+                  </div>
+
+                  <div className="mt-4 grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
+                    <section className="rounded-2xl border border-border bg-background p-4">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <div>
+                          <p className="text-xs font-bold uppercase tracking-[0.14em] text-brand">Price breakdown</p>
+                          <h3 className="mt-1 font-display text-lg font-bold text-ink">Booking charges</h3>
+                        </div>
+                        {b.discount_code && <Badge variant="outline">Code: {b.discount_code}</Badge>}
+                      </div>
+                      <div className="mt-4 divide-y divide-border text-sm">
+                        {[
+                          ["Nightly subtotal", Number(b.nightly_subtotal ?? 0)],
+                          ["Cleaning fee", Number(b.cleaning_fee ?? 0)],
+                          ["Service fee", Number(b.service_fee ?? 0)],
+                          ["Extra guest fee", Number(b.extra_guest_fee ?? 0)],
+                          ["Security deposit", Number(b.security_deposit ?? 0)],
+                        ].map(([label, value]) => (
+                          <div key={String(label)} className="flex items-center justify-between gap-4 py-2">
+                            <span className="text-muted-foreground">{String(label)}</span>
+                            <span className="font-medium text-ink">{formatNaira(Number(value))}</span>
+                          </div>
+                        ))}
+                        {Number(b.discount_amount ?? 0) > 0 && (
+                          <div className="flex items-center justify-between gap-4 py-2">
+                            <span className="text-muted-foreground">Discount</span>
+                            <span className="font-medium text-ink">−{formatNaira(Number(b.discount_amount))}</span>
+                          </div>
+                        )}
+                        <div className="flex items-center justify-between gap-4 pt-3">
+                          <span className="font-bold text-ink">Total</span>
+                          <span className="font-display text-lg font-bold text-ink">{formatNaira(totalAmount)}</span>
+                        </div>
+                      </div>
+                    </section>
+
+                    <section className="rounded-2xl border border-border bg-background p-4">
+                      <p className="text-xs font-bold uppercase tracking-[0.14em] text-brand">Booking record</p>
+                      <h3 className="mt-1 font-display text-lg font-bold text-ink">Reservation details</h3>
+                      <div className="mt-4 space-y-3 text-sm">
+                        <div><p className="text-xs text-muted-foreground">Booking reference</p><p className="break-all font-medium text-ink">{b.reference}</p></div>
+                        <div><p className="text-xs text-muted-foreground">Created</p><p className="font-medium text-ink">{new Date(b.created_at).toLocaleString()}</p></div>
+                        <div><p className="text-xs text-muted-foreground">Booking status</p><p className="font-medium capitalize text-ink">{String(b.status).replace("_", " ")}</p></div>
+                        <div><p className="text-xs text-muted-foreground">Payment choice</p><p className="font-medium text-ink">{b.pay_deposit ? "50% part payment / 50% balance" : "Pay in full"}</p></div>
+                        {b.notes && <div><p className="text-xs text-muted-foreground">Notes</p><p className="whitespace-pre-wrap font-medium text-ink">{b.notes}</p></div>}
+                        {b.cancellation_reason && <div><p className="text-xs text-muted-foreground">Cancellation reason</p><p className="whitespace-pre-wrap font-medium text-ink">{b.cancellation_reason}</p></div>}
+                      </div>
+                    </section>
+                  </div>
+
+                  <section className="mt-4 rounded-2xl border border-border bg-background p-4">
+                    <div>
+                      <p className="text-xs font-bold uppercase tracking-[0.14em] text-brand">Transactions</p>
+                      <h3 className="mt-1 font-display text-lg font-bold text-ink">Payment history</h3>
+                      <p className="mt-1 text-xs text-muted-foreground">Every Paystack or manual payment recorded against this booking.</p>
+                    </div>
+                    <div className="mt-4 space-y-2">
+                      {sortedPayments.map((payment: any) => (
+                        <div key={payment.id} className="grid gap-2 rounded-xl border border-border p-3 text-sm sm:grid-cols-[1fr_auto_auto] sm:items-center">
+                          <div className="min-w-0">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <p className="break-all font-semibold text-ink">{payment.reference}</p>
+                              <Badge variant={payment.status === "success" ? "default" : "secondary"} className="capitalize">{payment.status}</Badge>
+                              {payment.is_deposit && <Badge variant="outline">Part payment</Badge>}
+                            </div>
+                            <p className="mt-1 text-xs text-muted-foreground capitalize">{payment.provider} · {payment.paid_at ? new Date(payment.paid_at).toLocaleString() : "Not paid yet"}</p>
+                          </div>
+                          <p className="font-display text-lg font-bold text-ink">{formatNaira(Number(payment.amount ?? 0))}</p>
+                          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{payment.currency ?? "NGN"}</p>
+                        </div>
+                      ))}
+                      {sortedPayments.length === 0 && <p className="rounded-xl bg-secondary/50 px-4 py-5 text-center text-sm text-muted-foreground">No payment transactions have been recorded yet.</p>}
+                    </div>
+                  </section>
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
     </div>
   );
