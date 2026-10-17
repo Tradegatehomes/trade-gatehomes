@@ -61,6 +61,7 @@ function AdminPage() {
     { value: "properties", label: "Properties", icon: Home, group: "Operations", permission: "manage_properties" },
     { value: "calendar", label: "Availability", icon: CalendarDays, group: "Operations", permission: "manage_availability" },
     { value: "pricing", label: "Pricing", icon: Percent, group: "Revenue", permission: "manage_pricing" },
+    { value: "payments", label: "Payments", icon: CreditCard, group: "Revenue", permission: "manage_payments" },
     { value: "discounts", label: "Discounts", icon: Tags, group: "Revenue", permission: "manage_discounts" },
     { value: "amenities", label: "Amenities", icon: Settings2, group: "Content", permission: "manage_amenities" },
     { value: "reviews", label: "Reviews", icon: Star, group: "Content", permission: "manage_reviews" },
