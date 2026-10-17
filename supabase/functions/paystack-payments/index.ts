@@ -92,7 +92,7 @@ Deno.serve(async (req: Request) => {
 
     const { data: booking, error: bookingError } = await supabase
       .from("bookings")
-      .select("id,total_amount")
+      .select("id,reference,total_amount")
       .eq("id", payment.booking_id)
       .single();
     if (bookingError || !booking) throw new Error("Booking not found.");
