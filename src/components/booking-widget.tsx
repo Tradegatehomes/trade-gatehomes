@@ -198,7 +198,7 @@ export function BookingWidget({ property }: { property: PropertyDetailDto }) {
                     <label className="flex items-center gap-3 text-sm">
                       <RadioGroupItem value="deposit" id="pay-deposit" />
                       <span>
-                        Pay deposit now — <strong>{formatNaira(quote.deposit_amount_now)}</strong>,
+                        Part payment now — <strong>{formatNaira(quote.deposit_amount_now)}</strong>,
                         balance {formatNaira(quote.deposit_balance_amount)} due{" "}
                         {quote.deposit_balance_due_date
                           ? formatDate(quote.deposit_balance_due_date)
@@ -243,7 +243,7 @@ export function BookingWidget({ property }: { property: PropertyDetailDto }) {
               {submitting ? "Sending…" : "Send reservation request"}
             </Button>
             <p className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
-              <ShieldCheck className="size-3.5" /> You won’t be charged on this page. Payment instructions are sent after your reservation is reviewed.
+              <ShieldCheck className="size-3.5" /> Choose full payment or 50% part payment. Secure checkout happens on Paystack after your reservation is created.
             </p>
           </div>
         ) : null}
