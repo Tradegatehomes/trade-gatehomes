@@ -112,6 +112,27 @@ Deno.serve(async (req: Request) => {
       .eq("id", booking.id);
     if (updateBookingError) throw updateBookingError;
 
+    // Best-effort email notification for both guest and bookings inbox.
+    try {
+      const publishableKeys = Deno.env.get("SUPABASE_PUBLISHABLE_KEYS");
+      const publishableKey = publishableKeys
+        ? JSON.parse(publishableKeys).default
+        : Deno.env.get("SUPABASE_ANON_KEY");
+      if (publishableKey) {
+        await fetch(`${supabaseUrl}/functions/v1/booking-emails`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", apikey: publishableKey },
+          body: JSON.stringify({
+            event: "payment_confirmed",
+            bookingReference: booking.reference,
+            paymentReference: reference,
+          }),
+        });
+      }
+    } catch (error) {
+      console.error("Payment email notification failed", error);
+    }
+
     return { alreadyProcessed: false, payment, totalPaid, fullyPaid };
   }
 
