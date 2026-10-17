@@ -234,7 +234,24 @@ export const createBooking = createServerFn({ method: "POST" })
       return { ok: false as const, reference: null, error: message };
     }
 
-    return { ok: true as const, reference: String(reference), error: null };
+    const bookingReference = String(reference);
+
+    // Email notifications are best-effort and must never block a successful booking.
+    try {
+      const url = process.env["SUPABASE_URL"] || import.meta.env["VITE_SUPABASE_URL"];
+      const key = process.env["SUPABASE_PUBLISHABLE_KEY"] || import.meta.env["VITE_SUPABASE_PUBLISHABLE_KEY"];
+      if (url && key) {
+        await fetch(`${url}/functions/v1/booking-emails`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", apikey: key },
+          body: JSON.stringify({ event: "booking_created", bookingReference }),
+        });
+      }
+    } catch {
+      // Do not fail the reservation if the notification provider is unavailable.
+    }
+
+    return { ok: true as const, reference: bookingReference, error: null };
   });
 
 export const getBookingByReference = createServerFn({ method: "GET" })
