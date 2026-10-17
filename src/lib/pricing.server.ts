@@ -143,9 +143,8 @@ export function computeQuote(
       ? Math.round(Number(property.deposit_fixed))
       : Math.round((total * Number(property.deposit_percent)) / 100);
     depositBalanceAmount = total - depositAmountNow;
-    const due = new Date(checkIn + "T00:00:00");
-    due.setDate(due.getDate() - property.balance_due_days);
-    depositBalanceDueDate = due.toISOString().slice(0, 10);
+    // The remaining 50% is due on or before the guest's check-in date.
+    depositBalanceDueDate = checkIn;
     if (payDeposit) {
       amountDueNow = depositAmountNow;
       balanceAmount = depositBalanceAmount;
