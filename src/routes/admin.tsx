@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { BarChart3, BedDouble, Bell, CalendarDays, History, Home, ListChecks, Percent, Plus, Search, Settings2, ShieldCheck, Star, Tags } from "lucide-react";
+import { BarChart3, BedDouble, Bell, CalendarDays, CreditCard, History, Home, ListChecks, Percent, Plus, Search, Settings2, ShieldCheck, Star, Tags } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminAccess, type AdminPermission } from "@/hooks/use-admin-access";
@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { formatDate, formatNaira } from "@/lib/format";
-import { Discounts, PricingRules, PropertyAmenities, Reviews } from "@/components/admin/extra-tabs";
+import { Discounts, Payments, PricingRules, PropertyAmenities, Reviews } from "@/components/admin/extra-tabs";
 import { UserAccess } from "@/components/admin/user-access";
 import type { Database } from "@/integrations/supabase/types";
 
