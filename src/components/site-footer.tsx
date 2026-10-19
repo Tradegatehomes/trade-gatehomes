@@ -9,7 +9,7 @@ const whatsappLink = `https://wa.me/${WHATSAPP.replace(/\D/g, "")}`;
 export function SiteFooter() {
   return (
     <footer className="mt-20 border-t border-border/70 bg-card">
-      <div className="mx-auto grid max-w-6xl gap-10 px-4 py-12 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mx-auto grid max-w-6xl gap-10 px-4 py-12 sm:grid-cols-2 lg:grid-cols-5">
         <div>
           <div className="flex items-center gap-3">
             <img src="/tradegate-icon.svg" alt="" aria-hidden="true" className="h-20 w-28 shrink-0 object-contain object-left mix-blend-multiply" />
@@ -62,6 +62,15 @@ export function SiteFooter() {
                 Chat with us on WhatsApp
               </a>
             </li>
+          </ul>
+        </div>
+
+        <div>
+          <h3 className="text-sm font-bold uppercase tracking-wide text-ink/70">Legal</h3>
+          <ul className="mt-3 space-y-2 text-sm">
+            <li><Link to="/terms" className="text-muted-foreground hover:text-ink">Terms & Conditions</Link></li>
+            <li><Link to="/privacy" className="text-muted-foreground hover:text-ink">Privacy Policy</Link></li>
+            <li><Link to="/cancellation-refund-policy" className="text-muted-foreground hover:text-ink">Cancellation/Refund Policy</Link></li>
           </ul>
         </div>
 
