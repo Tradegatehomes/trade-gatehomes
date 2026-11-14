@@ -227,16 +227,25 @@ function BookingConfirmationPage() {
       <div className="mt-6 grid gap-4 sm:grid-cols-2">
         <div className="rounded-3xl bg-card p-6 shadow-card">
           <h3 className="font-display text-lg font-bold text-ink">Next steps</h3>
-          <ol className="mt-3 list-decimal space-y-2 pl-5 text-sm text-muted-foreground">
-            <li>Use the secure payment button above to pay {b.status === "partially_paid" ? "the remaining balance" : formatNaira(b.amountDueNow)}.</li>
-            <li>Successful payments are verified automatically and reflected on your booking.</li>
-            <li>
-              {b.payDeposit
-                ? `Pay the remaining ${formatNaira(b.balanceAmount)} on or before ${formatDate(b.checkIn)}.`
-                : "Your booking will show as fully paid once the payment is verified."}
-            </li>
-            <li>Show your reference {b.reference} at check-in.</li>
-          </ol>
+          {["fully_paid", "completed"].includes(b.status) ? (
+            <ol className="mt-3 list-decimal space-y-2 pl-5 text-sm text-muted-foreground">
+              <li>Your payment has been confirmed and no further payment is currently due.</li>
+              <li>Keep your booking reference handy for any support request or booking change.</li>
+              <li>Follow the property check-in instructions provided with your booking.</li>
+              <li>Show your reference {b.reference} at check-in.</li>
+            </ol>
+          ) : (
+            <ol className="mt-3 list-decimal space-y-2 pl-5 text-sm text-muted-foreground">
+              <li>Use the secure payment button above to pay {b.status === "partially_paid" ? "the remaining balance" : formatNaira(b.amountDueNow)}.</li>
+              <li>Successful payments are verified automatically and reflected on your booking.</li>
+              <li>
+                {b.payDeposit
+                  ? `Pay the remaining ${formatNaira(b.balanceAmount)} on or before ${formatDate(b.checkIn)}.`
+                  : "Your booking will show as fully paid once the payment is verified."}
+              </li>
+              <li>Show your reference {b.reference} at check-in.</li>
+            </ol>
+          )}
         </div>
         <div className="rounded-3xl bg-card p-6 shadow-card">
           <h3 className="font-display text-lg font-bold text-ink">Need to talk to someone?</h3>
