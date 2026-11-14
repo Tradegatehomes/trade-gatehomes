@@ -92,11 +92,8 @@ export const Route = createFileRoute("/properties/$slug")({
       ],
     };
   },
-  loader: async ({ params, context }) => {
-    const property = await context.queryClient.ensureQueryData(propertyQuery(params.slug));
-    if (!property) throw notFound();
-    return property;
-  },
+  loader: ({ params, context }) =>
+    context.queryClient.ensureQueryData(propertyQuery(params.slug)),
   notFoundComponent: () => (
     <div className="mx-auto max-w-md px-4 py-20 text-center">
       <h1 className="font-display text-2xl font-bold text-ink">This listing isn't available</h1>
