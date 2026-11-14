@@ -8,6 +8,7 @@ export const Route = createFileRoute("/terms")({
       { name: "description", content: "Terms and conditions for using TradeGate Continental Homes and making reservations." },
       { name: "robots", content: "index,follow" },
     ],
+    links: [{ rel: "canonical", href: "https://www.tradegatehomes.com/terms" }],
   }),
   component: TermsPage,
 });
