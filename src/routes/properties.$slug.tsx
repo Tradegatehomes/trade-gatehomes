@@ -59,9 +59,36 @@ export const Route = createFileRoute("/properties/$slug")({
             `Book ${p.name} in ${p.city}, Nigeria. Live availability and clear Naira pricing.`,
         },
         { property: "og:type", content: "website" },
+        { property: "og:url", content: `https://www.tradegatehomes.com/properties/${p.slug}` },
         ...(p.image ? [{ property: "og:image", content: p.image }] : []),
         { name: "twitter:card", content: "summary_large_image" },
         ...(p.image ? [{ name: "twitter:image", content: p.image }] : []),
+      ],
+      links: [
+        { rel: "canonical", href: `https://www.tradegatehomes.com/properties/${p.slug}` },
+      ],
+      scripts: [
+        {
+          type: "application/ld+json",
+          children: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "LodgingBusiness",
+            name: p.name,
+            description:
+              p.description?.replace("[PROPERTY DESCRIPTION] ", "") ??
+              `Shortlet apartment in ${p.city}, Nigeria.`,
+            url: `https://www.tradegatehomes.com/properties/${p.slug}`,
+            ...(p.image ? { image: p.image } : {}),
+            address: {
+              "@type": "PostalAddress",
+              ...(p.address ? { streetAddress: p.address } : {}),
+              addressLocality: p.city,
+              ...(p.state ? { addressRegion: p.state } : {}),
+              addressCountry: p.country || "Nigeria",
+            },
+            priceRange: `₦${Number(p.base_price).toLocaleString("en-NG")} per night`,
+          }),
+        },
       ],
     };
   },
