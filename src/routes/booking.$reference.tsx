@@ -47,11 +47,8 @@ export const Route = createFileRoute("/booking/$reference")({
       ],
     };
   },
-  loader: async ({ params, context }) => {
-    const booking = await context.queryClient.ensureQueryData(bookingQuery(params.reference));
-    if (!booking) throw notFound();
-    return booking;
-  },
+  loader: ({ params, context }) =>
+    context.queryClient.ensureQueryData(bookingQuery(params.reference)),
   notFoundComponent: () => (
     <div className="mx-auto max-w-md px-4 py-20 text-center">
       <h1 className="font-display text-2xl font-bold text-ink">Booking not found</h1>
