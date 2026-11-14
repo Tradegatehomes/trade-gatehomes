@@ -5,4 +5,4 @@ Disallow: /admin
 Disallow: /account
 Disallow: /booking/
 
-Sitemap: https://trade-gatehomes.vercel.app/sitemap.xml
+Sitemap: https://www.tradegatehomes.com/sitemap.xml
