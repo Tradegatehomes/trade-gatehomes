@@ -88,7 +88,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
           "Browse verified shortlet apartments in Lagos, Abuja and the United States. Live availability, clear Naira pricing, instant booking.",
       },
       { property: "og:type", content: "website" },
+      { property: "og:site_name", content: "TradeGate Continental Homes" },
+      { property: "og:image", content: "https://lzrolbujldukelngmsah.supabase.co/storage/v1/object/public/property-images/9c75fe78-671e-4a20-ba7c-8f0bfa8e1b9d/1791979144700-whatsapp-image-2026-10-13-at-19.52.54.jpeg" },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:image", content: "https://lzrolbujldukelngmsah.supabase.co/storage/v1/object/public/property-images/9c75fe78-671e-4a20-ba7c-8f0bfa8e1b9d/1791979144700-whatsapp-image-2026-10-13-at-19.52.54.jpeg" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
@@ -98,6 +101,25 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       {
         rel: "stylesheet",
         href: "https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Manrope:wght@400;500;600;700&display=swap",
+      },
+    ],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "WebSite",
+          name: "TradeGate Continental Homes",
+          url: "https://www.tradegatehomes.com",
+          publisher: {
+            "@type": "Organization",
+            name: "TradeGate Continental Homes",
+            url: "https://www.tradegatehomes.com",
+            logo: "https://www.tradegatehomes.com/favicon.png",
+            email: "bookings@tradegatehomes.com",
+            telephone: "+2348069534435",
+          },
+        }),
       },
     ],
   }),
@@ -129,7 +151,6 @@ function RootComponent() {
       <div className="flex min-h-screen flex-col bg-background font-sans">
         <SiteHeader />
         <main className="flex-1">
-          {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
           <Outlet />
         </main>
         <SiteFooter />

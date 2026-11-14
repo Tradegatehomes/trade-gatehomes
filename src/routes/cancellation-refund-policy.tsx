@@ -8,6 +8,7 @@ export const Route = createFileRoute("/cancellation-refund-policy")({
       { name: "description", content: "Cancellation, refund and payment-balance policy for TradeGate Continental Homes bookings." },
       { name: "robots", content: "index,follow" },
     ],
+    links: [{ rel: "canonical", href: "https://www.tradegatehomes.com/cancellation-refund-policy" }],
   }),
   component: CancellationRefundPage,
 });

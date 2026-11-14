@@ -8,6 +8,7 @@ export const Route = createFileRoute("/privacy")({
       { name: "description", content: "How TradeGate Continental Homes collects and uses guest information." },
       { name: "robots", content: "index,follow" },
     ],
+    links: [{ rel: "canonical", href: "https://www.tradegatehomes.com/privacy" }],
   }),
   component: PrivacyPage,
 });
