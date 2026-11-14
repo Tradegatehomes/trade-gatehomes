@@ -3,6 +3,7 @@ Allow: /
 
 Disallow: /admin
 Disallow: /account
+Disallow: /auth
 Disallow: /booking/
 
 Sitemap: https://www.tradegatehomes.com/sitemap.xml
